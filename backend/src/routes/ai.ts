@@ -208,7 +208,11 @@ router.post('/copilot', async (req: AuthenticatedRequest, res: Response) => {
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: 'Invalid input' }); return; }
-    const { message, history } = parsed.data;
+    const { message } = parsed.data;
+    const history: { role: 'user' | 'model'; content: string }[] = (parsed.data.history || []).map(item => ({
+      role: (item.role === 'model' ? 'model' : 'user') as 'user' | 'model',
+      content: item.content || '',
+    }));
 
     // Fetch user context
     const [tasksResult, profileResult] = await Promise.all([
