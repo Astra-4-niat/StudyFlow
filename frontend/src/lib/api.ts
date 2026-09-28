@@ -2,8 +2,16 @@ import axios from 'axios';
 import { supabase } from './supabase';
 
 const rawApiUrl = import.meta.env.VITE_API_URL;
-const API_URL = rawApiUrl !== undefined && rawApiUrl !== ''
-  ? rawApiUrl.replace(/\/+$/, '')
+// Defensively normalize: if user provided a URL ending with /api, strip it since routes already include /api
+let cleanApiUrl = (rawApiUrl || '').trim().replace(/\/+$/, '');
+if (cleanApiUrl.endsWith('/api')) {
+  cleanApiUrl = cleanApiUrl.slice(0, -4);
+}
+
+// In production, ignore any localhost URL that may have been copied from local .env to Vercel env settings
+const isLocalhost = cleanApiUrl.includes('localhost') || cleanApiUrl.includes('127.0.0.1');
+const API_URL = cleanApiUrl && (!isLocalhost || import.meta.env.DEV)
+  ? cleanApiUrl
   : (import.meta.env.DEV ? 'http://localhost:3001' : '');
 
 const api = axios.create({
