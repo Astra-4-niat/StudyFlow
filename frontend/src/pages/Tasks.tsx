@@ -249,6 +249,14 @@ const Tasks: React.FC = () => {
     return Array.from(new Set(tasks.map(t => t.subject).filter(Boolean)));
   }, [tasks]);
 
+  const todayKey = getTodayKey();
+  const todayTasks = useMemo(() => {
+    return tasks.filter(t => getTaskDateKey(t.deadline) === todayKey);
+  }, [tasks, todayKey]);
+
+  const todayCompleted = todayTasks.filter(t => t.status === 'completed').length;
+  const todayProgress = todayTasks.length > 0 ? Math.round((todayCompleted / todayTasks.length) * 100) : 0;
+
   const counts = {
     all: tasks.length,
     pending: tasks.filter(t => t.status === 'pending').length,
@@ -420,6 +428,98 @@ const Tasks: React.FC = () => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Today's Target Card - Always Visible */}
+      <div className="today-target-card">
+        <div className="today-target-header">
+          <div>
+            <div className="today-target-title">
+              <span>🎯</span>
+              <span>Today's Targets</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-muted)' }}>
+                ({new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })})
+              </span>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
+              {todayTasks.length === 0
+                ? 'No targets scheduled for today. Set a goal or study block to stay ahead!'
+                : `${todayCompleted} of ${todayTasks.length} target${todayTasks.length !== 1 ? 's' : ''} completed (${todayProgress}%)`}
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            {todayTasks.length > 0 && todayCompleted === todayTasks.length && (
+              <span className="badge badge-success" style={{ fontSize: 12, padding: '4px 10px' }}>
+                🎉 All targets completed today!
+              </span>
+            )}
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => openCreateForDate(todayKey)}
+              style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            >
+              <Plus size={13} /> + Add Today's Target
+            </button>
+          </div>
+        </div>
+
+        {todayTasks.length > 0 && (
+          <>
+            <div className="today-progress-bar">
+              <div
+                className="today-progress-fill"
+                style={{
+                  width: `${todayProgress}%`,
+                  background: todayProgress === 100 ? 'var(--success)' : 'var(--accent)',
+                }}
+              />
+            </div>
+
+            <div className="today-targets-grid">
+              {todayTasks.map(task => (
+                <div
+                  key={task.id}
+                  className={`today-target-item ${task.status === 'completed' ? 'today-target-item--done' : ''}`}
+                >
+                  <button
+                    className={`task-check ${task.status === 'completed' ? 'task-check--done' : ''}`}
+                    onClick={(e) => handleComplete(task, e)}
+                    title={task.status === 'completed' ? 'Mark incomplete' : 'Mark complete'}
+                  >
+                    {task.status === 'completed' && <Check size={12} />}
+                  </button>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Link
+                      to={`/tasks/${task.id}`}
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: task.status === 'completed' ? 'var(--text-muted)' : 'var(--text-primary)',
+                        textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                        display: 'block',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {task.title}
+                    </Link>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                      <span className="badge badge-accent" style={{ fontSize: 9.5, padding: '0 5px' }}>
+                        {task.subject}
+                      </span>
+                      <span className={`badge badge-priority-${task.priority}`} style={{ fontSize: 9.5, padding: '0 5px' }}>
+                        {task.priority}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Primary Filter Tabs */}
@@ -609,7 +709,7 @@ const Tasks: React.FC = () => {
           </div>
 
           {/* Selected Day Task Panel */}
-          <div className="calendar-day-panel">
+          <div className="calendar-day-panel" key={selectedDateKey}>
             <div className="calendar-day-header">
               <div>
                 <h3 className="calendar-day-title">{formatSelectedDateTitle(selectedDateKey)}</h3>

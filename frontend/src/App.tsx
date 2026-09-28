@@ -6,6 +6,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { SignUp } from './pages/SignUp';
+import { ResetPassword } from './pages/ResetPassword';
 import { Dashboard } from './pages/Dashboard';
 import { Tasks } from './pages/Tasks';
 import { TaskDetail } from './pages/TaskDetail';
@@ -39,6 +40,7 @@ const AppRoutes: React.FC = () => (
     <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
     <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
     <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />
+    <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
       <Route path="dashboard" element={<Dashboard />} />
       <Route path="tasks" element={<Tasks />} />

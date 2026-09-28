@@ -148,9 +148,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetPassword = async (email: string) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    let targetOrigin = 'https://studyflowve.vercel.app';
+    if (typeof window !== 'undefined' && window.location.origin) {
+      const host = window.location.hostname;
+      if (host !== 'localhost' && host !== '127.0.0.1' && !host.startsWith('192.168.')) {
+        targetOrigin = window.location.origin;
+      }
+    }
+    const redirectTo = `${targetOrigin}/reset-password`;
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: origin ? `${origin}/login` : undefined,
+      redirectTo,
     });
     if (error) {
       throw new Error(error.message || 'Unable to send password reset email.');

@@ -177,9 +177,12 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
       return;
     }
     const { email } = parsed.data;
-    const origin = (req.headers.origin as string) || 'https://studyflowve.vercel.app';
+    let origin = (req.headers.origin as string) || 'https://studyflowve.vercel.app';
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      origin = 'https://studyflowve.vercel.app';
+    }
     const { error } = await supabaseAnon.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/login`,
+      redirectTo: `${origin}/reset-password`,
     });
     if (error) {
       res.status(400).json({ error: error.message || 'Unable to send password reset email.' });
