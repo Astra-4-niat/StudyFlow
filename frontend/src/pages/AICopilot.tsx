@@ -7,11 +7,11 @@ import { MarkdownRenderer } from '../components/MarkdownRenderer';
 import toast from 'react-hot-toast';
 
 const SUGGESTIONS = [
-  'Plan my week',
-  'What should I study today?',
-  'Explain this topic',
-  'Break down my project',
-  'Help me prepare for my exam',
+  'What is scheduled in my study plan?',
+  'What tasks should I focus on today?',
+  'How should I prepare for my upcoming exam?',
+  'Break down Day 1 of my study plan',
+  'Review my high-priority deadlines',
 ];
 
 const AICopilot: React.FC = () => {
@@ -77,7 +77,7 @@ const AICopilot: React.FC = () => {
       <div className="page-header" style={{ marginBottom: 'var(--space-5)' }}>
         <div>
           <h1 className="page-title">AI Copilot</h1>
-          <p className="page-subtitle">Your academic assistant.</p>
+          <p className="page-subtitle">Personalized academic mentor with direct access to your tasks and study plans.</p>
         </div>
         {messages.length > 0 && (
           <button className="btn btn-ghost btn-sm" onClick={clearChat}>
@@ -96,8 +96,8 @@ const AICopilot: React.FC = () => {
               </div>
               <div>
                 <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>StudyFlow AI Copilot</h2>
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 400 }}>
-                  Ask me anything about your studies. I have access to your tasks and can provide personalized academic guidance.
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 440, lineHeight: 1.5 }}>
+                  Ask me anything about your studies. I have real-time access to your <strong>Tasks</strong> and <strong>AI Study Plans</strong> to give you personalized academic guidance and schedules.
                 </p>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', justifyContent: 'center', maxWidth: 500 }}>

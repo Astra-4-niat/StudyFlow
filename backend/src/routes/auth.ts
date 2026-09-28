@@ -165,4 +165,31 @@ router.post('/logout', (_req: Request, res: Response) => {
   res.json({ message: 'Signed out successfully' });
 });
 
+// POST /api/auth/forgot-password
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  try {
+    const schema = z.object({
+      email: z.string().trim().email('Please enter a valid email address'),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.errors[0]?.message || 'Invalid email address' });
+      return;
+    }
+    const { email } = parsed.data;
+    const origin = (req.headers.origin as string) || 'https://studyflowve.vercel.app';
+    const { error } = await supabaseAnon.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/login`,
+    });
+    if (error) {
+      res.status(400).json({ error: error.message || 'Unable to send password reset email.' });
+      return;
+    }
+    res.json({ message: 'Password reset link sent successfully. Please check your inbox.' });
+  } catch (err: any) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Unable to process password reset. Please try again later.' });
+  }
+});
+
 export const authRoutes = router;

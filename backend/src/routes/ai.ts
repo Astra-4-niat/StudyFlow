@@ -240,27 +240,101 @@ router.post('/copilot', async (req: AuthenticatedRequest, res: Response) => {
       content: item.content || '',
     }));
 
-    // Fetch user context
+    // Fetch comprehensive user context: tasks, AI study plans, and recent sessions
     const db = req.supabase || supabaseAdmin;
-    const [tasksResult, profileResult] = await Promise.all([
-      db.from('tasks').select('title,subject,deadline,priority,status').eq('user_id', req.userId!).neq('status', 'completed').order('deadline').limit(10),
-      db.from('profiles').select('full_name').eq('user_id', req.userId!).single(),
+    const [tasksResult, studyPlansResult, studySessionsResult, profileResult] = await Promise.all([
+      db.from('tasks')
+        .select('title,description,subject,deadline,priority,status,estimated_minutes')
+        .eq('user_id', req.userId!)
+        .order('created_at', { ascending: false })
+        .limit(25),
+      db.from('study_plans')
+        .select('title,description,start_date,end_date,total_minutes,plan_data,created_at')
+        .eq('user_id', req.userId!)
+        .order('created_at', { ascending: false })
+        .limit(5),
+      db.from('study_sessions')
+        .select('subject,duration_minutes,completed_at')
+        .eq('user_id', req.userId!)
+        .order('completed_at', { ascending: false })
+        .limit(8),
+      db.from('profiles').select('full_name').eq('user_id', req.userId!).maybeSingle(),
     ]);
 
-    const tasks = tasksResult.data || [];
     const studentName = profileResult.data?.full_name || 'Student';
-    const taskContext = tasks.length > 0
-      ? tasks.map(t => `- ${t.title} (${t.subject}, ${t.priority} priority, due: ${t.deadline ? new Date(t.deadline).toLocaleDateString() : 'no deadline'})`).join('\n')
-      : 'No active tasks';
 
-    const systemPrompt = `You are StudyFlow AI Copilot, an intelligent academic assistant for ${studentName}. 
-You help students organize their studies, create plans, and provide academic guidance.
-Be helpful, concise, and encouraging. Format responses clearly with bullet points or numbered lists when appropriate.
+    // Format Tasks Context
+    const tasks = tasksResult.data || [];
+    const pendingTasks = tasks.filter(t => t.status !== 'completed');
+    const completedTasks = tasks.filter(t => t.status === 'completed');
 
-Student's current active tasks:
+    let taskContext = 'No tasks recorded yet.';
+    if (tasks.length > 0) {
+      const pendingStr = pendingTasks.length > 0
+        ? pendingTasks.map(t => `- [${t.priority.toUpperCase()}] "${t.title}" (Subject: ${t.subject}, Due: ${t.deadline ? new Date(t.deadline).toLocaleDateString() : 'No deadline'}, Est: ${t.estimated_minutes ? `${t.estimated_minutes}m` : 'N/A'})${t.description ? `\n    Description: ${t.description}` : ''}`).join('\n')
+        : 'All tasks completed!';
+
+      const completedStr = completedTasks.length > 0
+        ? completedTasks.slice(0, 5).map(t => `- ✓ "${t.title}" (${t.subject})`).join('\n')
+        : 'None yet';
+
+      taskContext = `PENDING TASKS (${pendingTasks.length}):\n${pendingStr}\n\nRECENTLY COMPLETED TASKS (${completedTasks.length}):\n${completedStr}`;
+    }
+
+    // Format AI Study Plans Context
+    const studyPlans = studyPlansResult.data || [];
+    let plannerContext = 'No study plans generated yet.';
+    if (studyPlans.length > 0) {
+      plannerContext = studyPlans.map((sp, idx) => {
+        const pd = sp.plan_data as any;
+        const daysSummary = Array.isArray(pd?.days)
+          ? pd.days.slice(0, 7).map((d: any) => {
+              const actList = Array.isArray(d.activities)
+                ? d.activities.map((a: any) => `    * [${a.duration || 30}m] ${a.title} (${a.type || 'study'}: ${a.description || 'Practice & revision'})`).join('\n')
+                : '    * No specific activities recorded';
+              return `  - Day ${d.dayNumber || idx + 1} (${d.date ? new Date(d.date).toLocaleDateString() : 'TBD'}): Focus on "${d.focus || 'Core concepts'}" (${d.totalMinutes || 0}m total)\n${actList}`;
+            }).join('\n')
+          : '  - Schedule details pending';
+
+        return `Plan #${idx + 1}: "${sp.title}"
+• Summary: ${pd?.summary || sp.description || 'Personalized schedule'}
+• Target Timeline: ${sp.start_date || 'N/A'} to ${sp.end_date || 'N/A'} (${pd?.totalDays || 'N/A'} days, ~${Math.round((sp.total_minutes || 0) / 60)} hours total)
+• Scheduled Breakdown:
+${daysSummary}`;
+      }).join('\n\n');
+    }
+
+    // Format Recent Study Sessions
+    const sessions = studySessionsResult.data || [];
+    const sessionsContext = sessions.length > 0
+      ? sessions.map(s => `- ${s.subject}: ${s.duration_minutes} minutes on ${new Date(s.completed_at).toLocaleDateString()}`).join('\n')
+      : 'No recent study sessions logged.';
+
+    const systemPrompt = `You are StudyFlow AI Copilot, a high-level academic mentor and intelligent study assistant for ${studentName}.
+You have direct, real-time access to the student's complete StudyFlow workspace, including their AI Study Plans, active tasks, and study sessions.
+
+==============================
+STUDENT'S AI STUDY PLANS & SCHEDULE:
+==============================
+${plannerContext}
+
+==============================
+STUDENT'S TASKS & ASSIGNMENTS:
+==============================
 ${taskContext}
 
-Respond naturally based on the conversation. If asked about their tasks, reference the context above.`;
+==============================
+RECENT STUDY ACTIVITY:
+==============================
+${sessionsContext}
+
+==============================
+CORE INSTRUCTIONS:
+- You know all details of their study plan (the daily focuses, activities, durations, subjects, and exam dates) and their tasks (priorities, deadlines, status).
+- When the student asks about their study plan ("What's in my study plan?", "What do I need to study today?", "How is my physics preparation going?"), reference the EXACT plans and tasks detailed above.
+- If they ask for help prioritizing, recommend which study plan activities or urgent tasks to tackle first.
+- Provide encouraging, structured, and actionable guidance (use bullet points or numbered steps).
+- When relevant, offer study techniques (Active Recall, Pomodoro method, Spaced Repetition) tailored to their scheduled topics.`;
 
     const responseText = await runCopilotChat(message, history, systemPrompt);
     res.json({ response: responseText });
