@@ -56,7 +56,14 @@ app.use(express.json({ limit: '10mb' }));
 
 // Health check
 app.get(['/health', '/api/health'], (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    configured: {
+      supabase: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
+      gemini: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'placeholder-key')
+    }
+  });
 });
 
 // Public auth routes (signup, login)

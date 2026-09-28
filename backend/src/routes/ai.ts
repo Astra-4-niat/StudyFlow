@@ -7,11 +7,14 @@ import { AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'placeholder-key');
 const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite'];
 
 // Helper: call Gemini with automatic model failover on temporary 503/429/404
 async function callGemini(prompt: string): Promise<string> {
+  if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'placeholder-key') {
+    throw new Error('GEMINI_API_KEY is not configured in environment variables.');
+  }
   let lastErr: any;
   for (const modelName of CANDIDATE_MODELS) {
     try {
