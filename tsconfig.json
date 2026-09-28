@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": false
+  },
+  "include": ["api/**/*", "backend/src/**/*"],
+  "exclude": ["node_modules", "backend/dist", "frontend"]
+}

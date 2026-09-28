@@ -55,7 +55,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 
 // Health check
-app.get(['/health', '/api/health'], (_req, res) => {
+app.get(['/', '/health', '/api', '/api/health'], (_req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -66,25 +66,37 @@ app.get(['/health', '/api/health'], (_req, res) => {
   });
 });
 
-// Public auth routes (signup, login)
-app.use('/api/auth', authRoutes);
+// Public auth routes (signup, login) - mounted on both /api/auth and /auth
+app.use(['/api/auth', '/auth'], authRoutes);
 
-// Protected routes - require auth
-app.use('/api/tasks', authMiddleware, taskRoutes);
-app.use('/api/study-plans', authMiddleware, studyPlanRoutes);
-app.use('/api/study-sessions', authMiddleware, studySessionRoutes);
-app.use('/api/quizzes', authMiddleware, quizRoutes);
-app.use('/api/ai', authMiddleware, aiRoutes);
+// Protected routes - require auth - mounted on both /api/* and /* for seamless Vercel rewrites
+app.use(['/api/tasks', '/tasks'], authMiddleware, taskRoutes);
+app.use(['/api/study-plans', '/study-plans'], authMiddleware, studyPlanRoutes);
+app.use(['/api/study-sessions', '/study-sessions'], authMiddleware, studySessionRoutes);
+app.use(['/api/quizzes', '/quizzes'], authMiddleware, quizRoutes);
+app.use(['/api/ai', '/ai'], authMiddleware, aiRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
 
-if (!process.env.VERCEL) {
+// Avoid calling app.listen when imported as a Vercel Serverless Function or during testing
+const isVercel = Boolean(process.env.VERCEL || process.env.NOW_REGION);
+const isDirectRun = !isVercel && Boolean(
+  (typeof require !== 'undefined' && require.main === module) ||
+  (process.argv[1] && (
+    process.argv[1].endsWith('src/index.ts') ||
+    process.argv[1].endsWith('dist/index.js') ||
+    process.argv[1].includes('tsx')
+  ))
+);
+
+if (isDirectRun) {
   app.listen(PORT, () => {
     console.log(`✅ StudyFlow AI Backend running on port ${PORT}`);
   });
 }
 
 // Support both CommonJS and ES module consumers on Vercel
+(app as any).default = app;
 module.exports = app;
 export default app;

@@ -42,8 +42,8 @@ const Dashboard: React.FC = () => {
       ]);
       const allTasks: Task[] = Array.isArray(tasksRes.data) ? tasksRes.data : [];
       setTasks(allTasks);
-      const allSessions: any[] = Array.isArray(sessionsRes.data) ? sessionsRes.data : [];
-      const totalMinutes = allSessions.reduce((sum: number, s: { duration_minutes: number }) => sum + (s.duration_minutes || 0), 0);
+      const allSessions: { duration_minutes?: number }[] = Array.isArray(sessionsRes.data) ? sessionsRes.data : [];
+      const totalMinutes = allSessions.reduce((sum: number, s: { duration_minutes?: number }) => sum + (s.duration_minutes || 0), 0);
       setStats({
         total: allTasks.length,
         completed: allTasks.filter(t => t.status === 'completed').length,

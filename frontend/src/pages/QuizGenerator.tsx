@@ -80,7 +80,9 @@ const QuizGenerator: React.FC = () => {
     if (quiz.quizId) {
       try {
         await api.patch(`/api/quizzes/${quiz.quizId}/score`, { score });
-      } catch {}
+      } catch {
+        // Non-blocking: failure to record quiz score to history
+      }
     }
     setQuiz(prev => prev ? { ...prev, submitted: true, score } : null);
     setCurrentQ(0);

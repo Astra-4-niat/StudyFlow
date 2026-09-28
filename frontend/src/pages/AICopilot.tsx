@@ -45,8 +45,8 @@ const AICopilot: React.FC = () => {
       }
       const aiMsg: ChatMessage = { role: 'model', content: responseContent, timestamp: new Date() };
       setMessages(prev => [...prev, aiMsg]);
-    } catch (err: any) {
-      const message = err?.message || 'AI service temporarily unavailable. Please try again.';
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'AI service temporarily unavailable. Please try again.';
       toast.error(message);
     } finally {
       setLoading(false);

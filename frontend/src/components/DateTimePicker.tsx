@@ -642,7 +642,9 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
               onClick={handleClear}
               onKeyDown={e => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                  handleClear(e as any);
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onChange('');
                 }
               }}
               title="Clear deadline"

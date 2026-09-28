@@ -29,7 +29,9 @@ const StudyPlanner: React.FC = () => {
     try {
       const res = await api.get('/api/study-plans');
       setSavedPlans(Array.isArray(res.data) ? res.data : []);
-    } catch { }
+    } catch {
+      // Non-blocking: initial fetch of saved plans
+    }
 
   };
 

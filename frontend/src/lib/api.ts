@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { supabase } from './supabase';
 
-const API_URL = import.meta.env.VITE_API_URL !== undefined
-  ? import.meta.env.VITE_API_URL
+const rawApiUrl = import.meta.env.VITE_API_URL;
+const API_URL = rawApiUrl !== undefined && rawApiUrl !== ''
+  ? rawApiUrl.replace(/\/+$/, '')
   : (import.meta.env.DEV ? 'http://localhost:3001' : '');
 
 const api = axios.create({
@@ -10,6 +11,11 @@ const api = axios.create({
   timeout: 45000,
   headers: { 'Content-Type': 'application/json' },
 });
+
+export interface CustomApiError extends Error {
+  status?: number;
+  data?: unknown;
+}
 
 // Attach Supabase JWT to every request
 api.interceptors.request.use(async (config) => {
@@ -44,9 +50,10 @@ api.interceptors.response.use(
       else if (status === 500) message = 'AI service is temporarily unavailable.';
       else message = 'Something went wrong. Please try again.';
     }
-    const err = new Error(message);
-    (err as any).status = status;
-    (err as any).data = error.response.data;
+    const err: CustomApiError = Object.assign(new Error(message), {
+      status,
+      data: error.response.data,
+    });
     return Promise.reject(err);
   }
 );
