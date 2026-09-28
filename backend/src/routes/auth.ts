@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { supabaseAdmin, supabaseAnon, hasServiceRoleKey } from '../lib/supabase';
+import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -15,8 +16,8 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-// POST /api/auth/signup
-router.post('/signup', async (req: Request, res: Response) => {
+// POST /api/auth/signup and /api/auth/register
+router.post(['/signup', '/register'], async (req: Request, res: Response) => {
   try {
     const parseResult = signupSchema.safeParse(req.body);
     if (!parseResult.success) {
@@ -139,6 +140,28 @@ router.post('/login', async (req: Request, res: Response) => {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Unable to process sign in. Please try again later.' });
   }
+});
+
+// GET /api/auth/me
+router.get('/me', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const db = req.supabase || supabaseAdmin;
+    const { data: profile } = await db.from('profiles').select('*').eq('user_id', req.userId!).maybeSingle();
+    res.json({
+      user: {
+        id: req.userId,
+        email: req.userEmail,
+        profile: profile || null,
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || 'Failed to fetch current user' });
+  }
+});
+
+// POST /api/auth/logout
+router.post('/logout', (_req: Request, res: Response) => {
+  res.json({ message: 'Signed out successfully' });
 });
 
 export const authRoutes = router;

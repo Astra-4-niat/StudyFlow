@@ -58,6 +58,25 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
+router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parsed = quizSchema.partial().safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: 'Validation failed', details: parsed.error.errors }); return; }
+    const db = req.supabase || supabaseAdmin;
+    const { data, error } = await db
+      .from('quizzes')
+      .update({ ...parsed.data, updated_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .eq('user_id', req.userId!)
+      .select().single();
+    if (error || !data) { res.status(404).json({ error: 'Quiz not found' }); return; }
+    res.json(data);
+  } catch (err: any) {
+    console.error('Failed to update quiz:', err);
+    res.status(500).json({ error: err?.message || 'Failed to update quiz' });
+  }
+});
+
 router.patch('/:id/score', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { score } = req.body;

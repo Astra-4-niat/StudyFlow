@@ -57,6 +57,28 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
+const handleUpdateSession = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parsed = sessionSchema.partial().safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: 'Validation failed', details: parsed.error.errors }); return; }
+    const db = req.supabase || supabaseAdmin;
+    const { data, error } = await db
+      .from('study_sessions')
+      .update(parsed.data)
+      .eq('id', req.params.id)
+      .eq('user_id', req.userId!)
+      .select().single();
+    if (error || !data) { res.status(404).json({ error: 'Study session not found' }); return; }
+    res.json(data);
+  } catch (err: any) {
+    console.error('Failed to update study session:', err);
+    res.status(500).json({ error: err?.message || 'Failed to update study session' });
+  }
+};
+
+router.put('/:id', handleUpdateSession);
+router.patch('/:id', handleUpdateSession);
+
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const db = req.supabase || supabaseAdmin;

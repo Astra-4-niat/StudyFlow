@@ -8,7 +8,15 @@ import { AuthenticatedRequest } from '../middleware/auth';
 const router = Router();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'placeholder-key');
-const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite'];
+const CANDIDATE_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+  'gemini-3-flash-preview',
+  'gemini-flash-latest',
+  'gemini-3.5-flash-lite',
+];
+
+const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 // Helper: call Gemini with automatic model failover on temporary 503/429/404
 async function callGemini(prompt: string): Promise<string> {
@@ -25,7 +33,8 @@ async function callGemini(prompt: string): Promise<string> {
       lastErr = err;
       const isRetryable = err.status === 503 || err.status === 429 || err.status === 404 || (err.message && (err.message.includes('503') || err.message.includes('high demand') || err.message.includes('429') || err.message.includes('not found') || err.message.includes('no longer available')));
       if (isRetryable) {
-        continue; // Try next candidate model immediately
+        await sleep(600);
+        continue; // Try next candidate model with brief backoff
       }
       throw err;
     }
@@ -191,9 +200,25 @@ Return ONLY valid JSON:
   "advice": "string"
 }`;
 
-    const text = await callGemini(prompt);
-    const breakdown = parseAIJson(text);
-    res.json(breakdown);
+    try {
+      const text = await callGemini(prompt);
+      const breakdown = parseAIJson(text);
+      res.json(breakdown);
+    } catch (aiErr) {
+      console.warn('AI breakdown temporary failure, returning structured fallback:', aiErr);
+      res.json({
+        taskTitle: title,
+        steps: [
+          { stepNumber: 1, title: 'Understand Goals & Gather Materials', description: `Review expectations and organize all necessary references for ${title}.`, estimatedMinutes: 15, tips: 'Collect your lecture notes and syllabus before starting.' },
+          { stepNumber: 2, title: 'Outline Key Sub-topics', description: `Deconstruct ${title} into 3-4 structured milestones or focus areas.`, estimatedMinutes: 20, tips: 'Focus on high-yield concepts first.' },
+          { stepNumber: 3, title: 'Deep Work & Focused Execution', description: `Complete the primary analysis, writing, or practice problems for ${title}.`, estimatedMinutes: 45, tips: 'Eliminate distractions; use 25-minute Pomodoro sprints.' },
+          { stepNumber: 4, title: 'Review & Self-Assessment', description: 'Review your work against guidelines and test your conceptual understanding.', estimatedMinutes: 15, tips: 'Use active recall to verify retention.' },
+          { stepNumber: 5, title: 'Final Polish & Session Log', description: 'Make final refinements and log your completed study session in StudyFlow.', estimatedMinutes: 10, tips: 'Take pride in completing this milestone!' },
+        ],
+        totalEstimatedMinutes: 105,
+        advice: 'Tackle Step 1 immediately to build momentum. Small steps lead to mastery.'
+      });
+    }
   } catch (err) {
     console.error('Task breakdown error:', err);
     res.status(500).json({ error: 'Failed to break down task. Please try again.' });

@@ -70,6 +70,28 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
+const handleUpdateStudyPlan = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parsed = studyPlanSchema.partial().safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: 'Validation failed', details: parsed.error.errors }); return; }
+    const db = req.supabase || supabaseAdmin;
+    const { data, error } = await db
+      .from('study_plans')
+      .update({ ...parsed.data, updated_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .eq('user_id', req.userId!)
+      .select().single();
+    if (error || !data) { res.status(404).json({ error: 'Study plan not found' }); return; }
+    res.json(data);
+  } catch (err: any) {
+    console.error('Failed to update study plan:', err);
+    res.status(500).json({ error: err?.message || 'Failed to update study plan' });
+  }
+};
+
+router.put('/:id', handleUpdateStudyPlan);
+router.patch('/:id', handleUpdateStudyPlan);
+
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const db = req.supabase || supabaseAdmin;

@@ -99,8 +99,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
-// PUT /api/tasks/:id
-router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
+// PUT /api/tasks/:id and PATCH /api/tasks/:id
+const handleUpdateTask = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const parsed = taskSchema.partial().safeParse(req.body);
     if (!parsed.success) {
@@ -128,7 +128,10 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
     console.error('Failed to update task:', err);
     res.status(500).json({ error: err?.message || 'Failed to update task' });
   }
-});
+};
+
+router.put('/:id', handleUpdateTask);
+router.patch('/:id', handleUpdateTask);
 
 // DELETE /api/tasks/:id
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
