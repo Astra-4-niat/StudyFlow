@@ -79,8 +79,12 @@ app.use('/api/ai', authMiddleware, aiRoutes);
 // Error handler (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`✅ StudyFlow AI Backend running on port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`✅ StudyFlow AI Backend running on port ${PORT}`);
+  });
+}
 
+// Support both CommonJS and ES module consumers on Vercel
+module.exports = app;
 export default app;
