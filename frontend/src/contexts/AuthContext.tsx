@@ -99,20 +99,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    // 1. Call backend endpoint to create user with email_confirm: true via Supabase Admin
-    await api.post('/api/auth/signup', {
-      fullName,
-      email,
-      password,
-    });
+    try {
+      // 1. Try backend endpoint to create user with email_confirm: true via Supabase Admin
+      await api.post('/api/auth/signup', {
+        fullName,
+        email,
+        password,
+      });
+    } catch {
+      // Fallback: direct Supabase signUp
+      const { error: directError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } },
+      });
+      if (directError) {
+        throw new Error(directError.message || 'Unable to create account. Please try again.');
+      }
+    }
 
-    // 2. Sign in immediately to establish user session
+    // 2. Sign in to establish user session
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes('email not confirmed') || msg.includes('confirm')) {
+        throw new Error('Account created! Please check your email inbox to confirm your account, then sign in.');
+      }
       throw new Error(error.message || 'Account created, please sign in.');
     }
 

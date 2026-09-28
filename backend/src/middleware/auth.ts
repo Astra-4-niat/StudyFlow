@@ -1,9 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { supabaseAnon } from '../lib/supabase';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { supabaseAnon, createUserClient } from '../lib/supabase';
 
 export interface AuthenticatedRequest extends Request {
   userId?: string;
   userEmail?: string;
+  token?: string;
+  supabase?: SupabaseClient;
 }
 
 export const authMiddleware = async (
@@ -28,6 +31,8 @@ export const authMiddleware = async (
 
     req.userId = user.id;
     req.userEmail = user.email;
+    req.token = token;
+    req.supabase = createUserClient(token);
     next();
   } catch (err) {
     res.status(401).json({ error: 'Unauthorized' });

@@ -19,9 +19,10 @@ const taskSchema = z.object({
 // GET /api/tasks
 router.get('/', async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const db = req.supabase || supabaseAdmin;
     const { status, priority, task_type, sort = 'created_at', order = 'desc' } = req.query;
     
-    let query = supabaseAdmin
+    let query = db
       .from('tasks')
       .select('*')
       .eq('user_id', req.userId!);
@@ -43,15 +44,17 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
       throw error;
     }
     res.json(data || []);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch tasks' });
+  } catch (err: any) {
+    console.error('Failed to fetch tasks:', err);
+    res.status(500).json({ error: err?.message || 'Failed to fetch tasks' });
   }
 });
 
 // GET /api/tasks/:id
 router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { data, error } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { data, error } = await db
       .from('tasks')
       .select('*')
       .eq('id', req.params.id)
@@ -62,8 +65,9 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
       return;
     }
     res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch task' });
+  } catch (err: any) {
+    console.error('Failed to fetch task:', err);
+    res.status(500).json({ error: err?.message || 'Failed to fetch task' });
   }
 });
 
@@ -75,7 +79,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       res.status(400).json({ error: 'Validation failed', details: parsed.error.errors });
       return;
     }
-    const { data, error } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { data, error } = await db
       .from('tasks')
       .insert({ ...parsed.data, user_id: req.userId })
       .select()
@@ -88,8 +93,9 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       throw error;
     }
     res.status(201).json(data);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to create task' });
+  } catch (err: any) {
+    console.error('Failed to create task:', err);
+    res.status(500).json({ error: err?.message || 'Failed to create task' });
   }
 });
 
@@ -101,7 +107,8 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
       res.status(400).json({ error: 'Validation failed', details: parsed.error.errors });
       return;
     }
-    const { data, error } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { data, error } = await db
       .from('tasks')
       .update({ ...parsed.data, updated_at: new Date().toISOString() })
       .eq('id', req.params.id)
@@ -117,15 +124,17 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
       return;
     }
     res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to update task' });
+  } catch (err: any) {
+    console.error('Failed to update task:', err);
+    res.status(500).json({ error: err?.message || 'Failed to update task' });
   }
 });
 
 // DELETE /api/tasks/:id
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { error } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { error } = await db
       .from('tasks')
       .delete()
       .eq('id', req.params.id)
@@ -138,8 +147,9 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
       throw error;
     }
     res.json({ message: 'Task deleted' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to delete task' });
+  } catch (err: any) {
+    console.error('Failed to delete task:', err);
+    res.status(500).json({ error: err?.message || 'Failed to delete task' });
   }
 });
 

@@ -15,7 +15,8 @@ const quizSchema = z.object({
 
 router.get('/', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { data, error } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { data, error } = await db
       .from('quizzes')
       .select('*')
       .eq('user_id', req.userId!)
@@ -28,8 +29,9 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
       throw error;
     }
     res.json(data || []);
-  } catch {
-    res.status(500).json({ error: 'Failed to fetch quizzes' });
+  } catch (err: any) {
+    console.error('Failed to fetch quizzes:', err);
+    res.status(500).json({ error: err?.message || 'Failed to fetch quizzes' });
   }
 });
 
@@ -37,7 +39,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const parsed = quizSchema.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: 'Validation failed', details: parsed.error.errors }); return; }
-    const { data, error } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { data, error } = await db
       .from('quizzes')
       .insert({ ...parsed.data, user_id: req.userId })
       .select().single();
@@ -49,8 +52,9 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       throw error;
     }
     res.status(201).json(data);
-  } catch {
-    res.status(500).json({ error: 'Failed to save quiz' });
+  } catch (err: any) {
+    console.error('Failed to save quiz:', err);
+    res.status(500).json({ error: err?.message || 'Failed to save quiz' });
   }
 });
 
@@ -58,7 +62,8 @@ router.patch('/:id/score', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { score } = req.body;
     if (typeof score !== 'number') { res.status(400).json({ error: 'Score must be a number' }); return; }
-    const { data, error } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { data, error } = await db
       .from('quizzes')
       .update({ score })
       .eq('id', req.params.id)
@@ -73,14 +78,16 @@ router.patch('/:id/score', async (req: AuthenticatedRequest, res: Response) => {
       return;
     }
     res.json(data);
-  } catch {
-    res.status(500).json({ error: 'Failed to update quiz score' });
+  } catch (err: any) {
+    console.error('Failed to update quiz score:', err);
+    res.status(500).json({ error: err?.message || 'Failed to update quiz score' });
   }
 });
 
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { error } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { error } = await db
       .from('quizzes')
       .delete()
       .eq('id', req.params.id)
@@ -93,8 +100,9 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
       throw error;
     }
     res.json({ message: 'Quiz deleted' });
-  } catch {
-    res.status(500).json({ error: 'Failed to delete quiz' });
+  } catch (err: any) {
+    console.error('Failed to delete quiz:', err);
+    res.status(500).json({ error: err?.message || 'Failed to delete quiz' });
   }
 });
 

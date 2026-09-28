@@ -15,7 +15,8 @@ const sessionSchema = z.object({
 
 router.get('/', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { data, error } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { data, error } = await db
       .from('study_sessions')
       .select('*')
       .eq('user_id', req.userId!)
@@ -29,8 +30,9 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
       throw error;
     }
     res.json(data || []);
-  } catch {
-    res.status(500).json({ error: 'Failed to fetch study sessions' });
+  } catch (err: any) {
+    console.error('Failed to fetch study sessions:', err);
+    res.status(500).json({ error: err?.message || 'Failed to fetch study sessions' });
   }
 });
 
@@ -38,7 +40,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const parsed = sessionSchema.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: 'Validation failed', details: parsed.error.errors }); return; }
-    const { data, error } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { data, error } = await db
       .from('study_sessions')
       .insert({
         ...parsed.data,
@@ -48,22 +51,25 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       .select().single();
     if (error) throw error;
     res.status(201).json(data);
-  } catch {
-    res.status(500).json({ error: 'Failed to save study session' });
+  } catch (err: any) {
+    console.error('Failed to save study session:', err);
+    res.status(500).json({ error: err?.message || 'Failed to save study session' });
   }
 });
 
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { error } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { error } = await db
       .from('study_sessions')
       .delete()
       .eq('id', req.params.id)
       .eq('user_id', req.userId!);
     if (error) throw error;
     res.json({ message: 'Session deleted' });
-  } catch {
-    res.status(500).json({ error: 'Failed to delete session' });
+  } catch (err: any) {
+    console.error('Failed to delete session:', err);
+    res.status(500).json({ error: err?.message || 'Failed to delete session' });
   }
 });
 

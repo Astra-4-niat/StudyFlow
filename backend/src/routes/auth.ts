@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { supabaseAdmin, supabaseAnon } from '../lib/supabase';
+import { supabaseAdmin, supabaseAnon, hasServiceRoleKey } from '../lib/supabase';
 
 const router = Router();
 
@@ -27,14 +27,32 @@ router.post('/signup', async (req: Request, res: Response) => {
 
     const { fullName, email, password } = parseResult.data;
 
-    // Use admin client to create user with email_confirm: true
-    // This avoids email rate limits (over_email_send_rate_limit) on free tiers
-    const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: fullName },
-    });
+    let newUser: any = null;
+    let createError: any = null;
+
+    if (hasServiceRoleKey) {
+      const result = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: fullName },
+      });
+      newUser = result.data?.user;
+      createError = result.error;
+    }
+
+    // Fallback if admin key wasn't set or admin creation was rejected
+    if (!newUser && (!hasServiceRoleKey || createError?.status === 401 || createError?.status === 403)) {
+      const anonResult = await supabaseAnon.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName },
+        },
+      });
+      newUser = anonResult.data?.user;
+      createError = anonResult.error;
+    }
 
     if (createError) {
       const msg = createError.message.toLowerCase();
@@ -50,7 +68,6 @@ router.post('/signup', async (req: Request, res: Response) => {
       return;
     }
 
-    const newUser = userData?.user;
     if (!newUser) {
       res.status(500).json({ error: 'User creation failed. Please try again.' });
       return;
