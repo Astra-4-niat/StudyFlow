@@ -99,6 +99,40 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
+// POST /api/tasks/batch - Create multiple tasks in one call (e.g. from AI Study Plan)
+router.post('/batch', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const batchSchema = z.object({
+      tasks: z.array(taskSchema).min(1).max(100),
+    });
+    const parsed = batchSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Validation failed', details: parsed.error.errors });
+      return;
+    }
+    const db = req.supabase || supabaseAdmin;
+    const taskRows = parsed.data.tasks.map(t => ({
+      ...t,
+      user_id: req.userId,
+    }));
+    const { data, error } = await db
+      .from('tasks')
+      .insert(taskRows)
+      .select();
+    if (error) {
+      if ((error as any).code === 'PGRST205' || (error as any).message?.includes('schema cache')) {
+        res.status(503).json({ error: 'Database table not found. Please run the supabase-schema.sql script in your Supabase SQL editor.' });
+        return;
+      }
+      throw error;
+    }
+    res.status(201).json(data || []);
+  } catch (err: any) {
+    console.error('Failed to create tasks in batch:', err);
+    res.status(500).json({ error: err?.message || 'Failed to create tasks in batch' });
+  }
+});
+
 // PUT /api/tasks/:id and PATCH /api/tasks/:id
 const handleUpdateTask = async (req: AuthenticatedRequest, res: Response) => {
   try {

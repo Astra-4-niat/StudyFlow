@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Sparkles, ChevronDown, ChevronUp, Loader, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BookOpen, Sparkles, ChevronDown, ChevronUp, Loader, Trash2, CheckSquare, Plus, Check, ArrowRight } from 'lucide-react';
 import api from '../lib/api';
-import { StudyPlan, AIStudyPlan } from '../types';
+import { StudyPlan, AIStudyPlan, StudyDay } from '../types';
 import { formatDate, formatMinutes } from '../utils/helpers';
 import toast from 'react-hot-toast';
 
@@ -22,6 +23,9 @@ const StudyPlanner: React.FC = () => {
   const [currentPlan, setCurrentPlan] = useState<AIStudyPlan | null>(null);
   const [savedPlans, setSavedPlans] = useState<StudyPlan[]>([]);
   const [expandedDay, setExpandedDay] = useState<number | null>(0);
+  const [addingTasks, setAddingTasks] = useState(false);
+  const [addedTasks, setAddedTasks] = useState(false);
+  const [addedDays, setAddedDays] = useState<Record<number, boolean>>({});
 
   useEffect(() => { fetchPlans(); }, []);
 
@@ -32,7 +36,6 @@ const StudyPlanner: React.FC = () => {
     } catch {
       // Non-blocking: initial fetch of saved plans
     }
-
   };
 
   const handleGenerate = async (e: React.FormEvent) => {
@@ -43,6 +46,8 @@ const StudyPlanner: React.FC = () => {
     }
     setGenerating(true);
     setCurrentPlan(null);
+    setAddedTasks(false);
+    setAddedDays({});
     try {
       const res = await api.post('/api/ai/study-plan', {
         goal: form.goal,
@@ -78,6 +83,129 @@ const StudyPlanner: React.FC = () => {
   const loadSavedPlan = (plan: StudyPlan) => {
     setCurrentPlan(plan.plan_data as AIStudyPlan);
     setExpandedDay(0);
+    setAddedTasks(false);
+    setAddedDays({});
+  };
+
+  const handleConvertPlanToTasks = async () => {
+    if (!currentPlan || !currentPlan.days) return;
+    setAddingTasks(true);
+    try {
+      const tasksToCreate: Array<{
+        title: string;
+        description: string;
+        subject: string;
+        task_type: 'study' | 'assignment' | 'exam' | 'project' | 'homework';
+        priority: 'low' | 'medium' | 'high';
+        status: 'pending';
+        deadline: string | null;
+        estimated_minutes: number | null;
+      }> = [];
+
+      currentPlan.days.forEach(day => {
+        let deadlineIso: string | null = null;
+        if (day.date) {
+          try {
+            const d = new Date(day.date);
+            if (!isNaN(d.getTime())) {
+              d.setHours(23, 59, 0, 0);
+              deadlineIso = d.toISOString();
+            }
+          } catch {
+            deadlineIso = null;
+          }
+        }
+
+        (day.activities || []).forEach(act => {
+          if (act.type === 'break') return;
+
+          let priority: 'low' | 'medium' | 'high' = 'medium';
+          if (act.type === 'review' || act.type === 'practice') priority = 'high';
+
+          tasksToCreate.push({
+            title: `[Day ${day.dayNumber}] ${act.title}`,
+            description: `${act.description || ''}\n\n• Focus: ${day.focus}\n• Plan: ${currentPlan.title}`,
+            subject: act.subject || form.subjects.split(',')[0].trim() || 'General Study',
+            task_type: 'study',
+            priority,
+            status: 'pending',
+            deadline: deadlineIso,
+            estimated_minutes: act.duration || 45,
+          });
+        });
+      });
+
+      if (tasksToCreate.length === 0) {
+        toast.error('No study activities found in this plan to convert');
+        return;
+      }
+
+      try {
+        await api.post('/api/tasks/batch', { tasks: tasksToCreate });
+      } catch {
+        // Fallback for direct per-item creation
+        await Promise.all(tasksToCreate.map(t => api.post('/api/tasks', t)));
+      }
+
+      setAddedTasks(true);
+      toast.success(`🎉 Added ${tasksToCreate.length} tasks to your Tasks section!`, {
+        duration: 4000,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add plan to tasks');
+    } finally {
+      setAddingTasks(false);
+    }
+  };
+
+  const handleAddDayToTasks = async (day: StudyDay, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (addedDays[day.dayNumber]) return;
+
+    try {
+      let deadlineIso: string | null = null;
+      if (day.date) {
+        try {
+          const d = new Date(day.date);
+          if (!isNaN(d.getTime())) {
+            d.setHours(23, 59, 0, 0);
+            deadlineIso = d.toISOString();
+          }
+        } catch {
+          deadlineIso = null;
+        }
+      }
+
+      const dayTasks = (day.activities || [])
+        .filter(a => a.type !== 'break')
+        .map(act => ({
+          title: `[Day ${day.dayNumber}] ${act.title}`,
+          description: `${act.description || ''}\n\n• Focus: ${day.focus}\n• Plan: ${currentPlan?.title || 'Study Schedule'}`,
+          subject: act.subject || form.subjects.split(',')[0].trim() || 'General Study',
+          task_type: 'study' as const,
+          priority: (act.type === 'review' || act.type === 'practice' ? 'high' : 'medium') as 'low' | 'medium' | 'high',
+          status: 'pending' as const,
+          deadline: deadlineIso,
+          estimated_minutes: act.duration || 45,
+        }));
+
+      if (dayTasks.length === 0) {
+        toast.error('No activities found for this day');
+        return;
+      }
+
+      try {
+        await api.post('/api/tasks/batch', { tasks: dayTasks });
+      } catch {
+        await Promise.all(dayTasks.map(t => api.post('/api/tasks', t)));
+      }
+
+      setAddedDays(prev => ({ ...prev, [day.dayNumber]: true }));
+      toast.success(`Added ${dayTasks.length} tasks for Day ${day.dayNumber}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add tasks for this day');
+    }
   };
 
   const update = (k: keyof PlanForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -194,15 +322,62 @@ const StudyPlanner: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* One-click Action to Add to Tasks */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 'var(--space-3)',
+                  marginTop: 'var(--space-4)',
+                  paddingTop: 'var(--space-4)',
+                  borderTop: '1px solid var(--border-subtle)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                    <CheckSquare size={16} style={{ color: 'var(--accent)' }} />
+                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                      {addedTasks ? (
+                        'All study activities have been converted to tasks in your workspace.'
+                      ) : (
+                        `${currentPlan.days?.reduce((sum, d) => sum + (d.activities?.filter(a => a.type !== 'break').length || 0), 0) || 0} study tasks ready to add.`
+                      )}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                    <button
+                      type="button"
+                      className={`btn ${addedTasks ? 'btn-secondary' : 'btn-primary'}`}
+                      onClick={handleConvertPlanToTasks}
+                      disabled={addingTasks || addedTasks}
+                      style={{ minWidth: 160 }}
+                    >
+                      {addingTasks ? (
+                        <><Loader size={14} className="spin" /> Adding to Tasks...</>
+                      ) : addedTasks ? (
+                        <><Check size={14} /> Added to Tasks</>
+                      ) : (
+                        <><Plus size={14} /> Add Plan to Tasks</>
+                      )}
+                    </button>
+
+                    {addedTasks && (
+                      <Link to="/tasks" className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        View in Tasks <ArrowRight size={14} />
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Timeline */}
               <div style={{ paddingLeft: 'var(--space-2)' }}>
                 {currentPlan.days?.map((day, idx) => (
                   <div key={idx} className="plan-day">
-                    <div className="plan-day-header">
+                    <div className="plan-day-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
                       <button
-                        style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', background: 'none', border: 'none', cursor: 'pointer', flex: 1, textAlign: 'left' }}
                         onClick={() => setExpandedDay(expandedDay === idx ? null : idx)}
                       >
                         <div style={{ flex: 1 }}>
@@ -211,6 +386,21 @@ const StudyPlanner: React.FC = () => {
                           <p className="plan-day-time">{formatMinutes(day.totalMinutes)} total</p>
                         </div>
                         {expandedDay === idx ? <ChevronUp size={16} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={16} style={{ color: 'var(--text-muted)' }} />}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        style={{ fontSize: 12, padding: '4px 10px', height: 'auto', flexShrink: 0, color: addedDays[day.dayNumber] || addedTasks ? 'var(--success)' : 'var(--text-secondary)' }}
+                        onClick={(e) => handleAddDayToTasks(day, e)}
+                        disabled={addedDays[day.dayNumber] || addedTasks}
+                        title="Add this day's activities to your Tasks list"
+                      >
+                        {addedDays[day.dayNumber] || addedTasks ? (
+                          <><Check size={12} /> Day Added</>
+                        ) : (
+                          <><Plus size={12} /> Add Day</>
+                        )}
                       </button>
                     </div>
 
