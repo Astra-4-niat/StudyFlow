@@ -139,7 +139,8 @@ Return ONLY valid JSON in exactly this structure:
     const planData = parseAIJson(text) as { title: string; summary: string; totalDays: number; totalMinutes: number; days: unknown[] };
     
     // Save to DB
-    const { data: saved, error } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { data: saved, error } = await db
       .from('study_plans')
       .insert({
         user_id: req.userId,
@@ -215,9 +216,10 @@ router.post('/copilot', async (req: AuthenticatedRequest, res: Response) => {
     }));
 
     // Fetch user context
+    const db = req.supabase || supabaseAdmin;
     const [tasksResult, profileResult] = await Promise.all([
-      supabaseAdmin.from('tasks').select('title,subject,deadline,priority,status').eq('user_id', req.userId!).neq('status', 'completed').order('deadline').limit(10),
-      supabaseAdmin.from('profiles').select('full_name').eq('user_id', req.userId!).single(),
+      db.from('tasks').select('title,subject,deadline,priority,status').eq('user_id', req.userId!).neq('status', 'completed').order('deadline').limit(10),
+      db.from('profiles').select('full_name').eq('user_id', req.userId!).single(),
     ]);
 
     const tasks = tasksResult.data || [];
@@ -331,9 +333,10 @@ router.post('/quiz', async (req: AuthenticatedRequest, res: Response) => {
 // POST /api/ai/recommendation
 router.post('/recommendation', async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const db = req.supabase || supabaseAdmin;
     const [tasksResult, sessionsResult] = await Promise.all([
-      supabaseAdmin.from('tasks').select('*').eq('user_id', req.userId!).neq('status', 'completed').order('deadline').limit(10),
-      supabaseAdmin.from('study_sessions').select('subject,duration_minutes,completed_at').eq('user_id', req.userId!).order('completed_at', { ascending: false }).limit(7),
+      db.from('tasks').select('*').eq('user_id', req.userId!).neq('status', 'completed').order('deadline').limit(10),
+      db.from('study_sessions').select('subject,duration_minutes,completed_at').eq('user_id', req.userId!).order('completed_at', { ascending: false }).limit(7),
     ]);
 
     const tasks = tasksResult.data || [];
@@ -372,7 +375,8 @@ Give a helpful, actionable recommendation. Be specific, not generic.`;
 // POST /api/ai/prioritize
 router.post('/prioritize', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { data: tasks } = await supabaseAdmin
+    const db = req.supabase || supabaseAdmin;
+    const { data: tasks } = await db
       .from('tasks')
       .select('id,title,subject,priority,deadline,estimated_minutes,status')
       .eq('user_id', req.userId!)
