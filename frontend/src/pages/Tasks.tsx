@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Plus, Search, Check, Edit2, Trash2, Calendar, Clock, X } from 'lucide-react';
+import {
+  Plus, Search, Check, Edit2, Trash2, Calendar as CalendarIcon,
+  Clock, X, ChevronLeft, ChevronRight, List, CalendarPlus, AlertCircle
+} from 'lucide-react';
 import api from '../lib/api';
 import { Task } from '../types';
 import { formatDeadline, getTaskTypeIcon, isOverdue } from '../utils/helpers';
@@ -9,6 +12,7 @@ import { Modal } from '../components/Modal';
 import { DateTimePicker } from '../components/DateTimePicker';
 
 type FilterStatus = 'all' | 'pending' | 'in_progress' | 'completed' | 'high';
+type ViewMode = 'calendar' | 'list';
 
 interface TaskFormData {
   title: string;
@@ -26,6 +30,37 @@ const defaultForm: TaskFormData = {
   priority: 'medium', status: 'pending', deadline: '', estimated_minutes: '',
 };
 
+// Date format helpers
+const getTodayKey = (): string => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const getTaskDateKey = (deadline: string | null | undefined): string | null => {
+  if (!deadline) return null;
+  const match = deadline.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+  const d = new Date(deadline);
+  if (isNaN(d.getTime())) return null;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const formatSelectedDateTitle = (dateKey: string): string => {
+  const parts = dateKey.split('-');
+  if (parts.length !== 3) return dateKey;
+  const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  const todayKey = getTodayKey();
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowKey = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+
+  const prefix = dateKey === todayKey ? 'Today — ' : dateKey === tomorrowKey ? 'Tomorrow — ' : '';
+  return prefix + d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 const Tasks: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -35,6 +70,14 @@ const Tasks: React.FC = () => {
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [deadlineFilter, setDeadlineFilter] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('calendar');
+  const [groupByDay, setGroupByDay] = useState(true);
+
+  // Calendar states
+  const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
+  const [selectedDateKey, setSelectedDateKey] = useState<string>(() => getTodayKey());
+
+  // Modal and CRUD states
   const [showModal, setShowModal] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [form, setForm] = useState<TaskFormData>(defaultForm);
@@ -57,18 +100,39 @@ const Tasks: React.FC = () => {
     try {
       const res = await api.get('/api/tasks');
       setTasks(Array.isArray(res.data) ? res.data : []);
-    } catch { toast.error('Failed to load tasks'); }
-    finally { setLoading(false); }
+    } catch {
+      toast.error('Failed to load tasks');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const openCreate = () => { setEditTask(null); setForm(defaultForm); setShowModal(true); };
+  const openCreate = () => {
+    setEditTask(null);
+    setForm(defaultForm);
+    setShowModal(true);
+  };
+
+  const openCreateForDate = (dateKey: string) => {
+    setEditTask(null);
+    setForm({
+      ...defaultForm,
+      deadline: `${dateKey}T12:00`,
+    });
+    setShowModal(true);
+  };
+
   const openEdit = (task: Task, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setEditTask(task);
     setForm({
-      title: task.title, description: task.description, subject: task.subject,
-      task_type: task.task_type, priority: task.priority, status: task.status,
+      title: task.title,
+      description: task.description,
+      subject: task.subject,
+      task_type: task.task_type,
+      priority: task.priority,
+      status: task.status,
       deadline: task.deadline ? task.deadline.slice(0, 16) : '',
       estimated_minutes: task.estimated_minutes?.toString() || '',
     });
@@ -96,7 +160,9 @@ const Tasks: React.FC = () => {
       setShowModal(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save task');
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleComplete = async (task: Task, e: React.MouseEvent) => {
@@ -107,7 +173,9 @@ const Tasks: React.FC = () => {
       const res = await api.put(`/api/tasks/${task.id}`, { status: newStatus });
       setTasks(prev => prev.map(t => t.id === task.id ? res.data : t));
       if (newStatus === 'completed') toast.success('Task completed! 🎉');
-    } catch { toast.error('Failed to update task'); }
+    } catch {
+      toast.error('Failed to update task');
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -116,30 +184,70 @@ const Tasks: React.FC = () => {
       setTasks(prev => prev.filter(t => t.id !== id));
       setDeleteConfirm(null);
       toast.success('Task deleted');
-    } catch { toast.error('Failed to delete task'); }
+    } catch {
+      toast.error('Failed to delete task');
+    }
   };
 
   const update = (k: keyof TaskFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
 
-  // Unique subjects
-  const subjects = Array.from(new Set(tasks.map(t => t.subject).filter(Boolean)));
+  // Month navigation
+  const handlePrevMonth = () => {
+    setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
 
-  const filtered = tasks
-    .filter(t => {
-      if (filter === 'all') return true;
-      if (filter === 'high') return t.priority === 'high';
-      return t.status === filter;
-    })
-    .filter(t => subjectFilter === 'all' || t.subject === subjectFilter)
-    .filter(t => typeFilter === 'all' || t.task_type === typeFilter)
-    .filter(t => {
-      if (deadlineFilter === 'all') return true;
-      if (deadlineFilter === 'overdue') return isOverdue(t.deadline) && t.status !== 'completed';
-      if (deadlineFilter === 'has_deadline') return !!t.deadline;
-      return true;
-    })
-    .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()) || t.subject.toLowerCase().includes(search.toLowerCase()));
+  const handleNextMonth = () => {
+    setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const handleToday = () => {
+    const today = new Date();
+    setCalendarMonth(today);
+    setSelectedDateKey(getTodayKey());
+  };
+
+  // Filter tasks
+  const filtered = useMemo(() => {
+    return tasks
+      .filter(t => {
+        if (filter === 'all') return true;
+        if (filter === 'high') return t.priority === 'high';
+        return t.status === filter;
+      })
+      .filter(t => subjectFilter === 'all' || t.subject === subjectFilter)
+      .filter(t => typeFilter === 'all' || t.task_type === typeFilter)
+      .filter(t => {
+        if (deadlineFilter === 'all') return true;
+        if (deadlineFilter === 'overdue') return isOverdue(t.deadline) && t.status !== 'completed';
+        if (deadlineFilter === 'has_deadline') return !!t.deadline;
+        return true;
+      })
+      .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()) || t.subject.toLowerCase().includes(search.toLowerCase()));
+  }, [tasks, filter, subjectFilter, typeFilter, deadlineFilter, search]);
+
+  // Map of tasks by date (YYYY-MM-DD)
+  const tasksByDate = useMemo(() => {
+    const map: Record<string, Task[]> = {};
+    filtered.forEach(task => {
+      const key = getTaskDateKey(task.deadline);
+      if (key) {
+        if (!map[key]) map[key] = [];
+        map[key].push(task);
+      }
+    });
+    return map;
+  }, [filtered]);
+
+  // Tasks for currently selected day in calendar
+  const selectedDateTasks = useMemo(() => {
+    return tasksByDate[selectedDateKey] || [];
+  }, [tasksByDate, selectedDateKey]);
+
+  // Unique subjects
+  const subjects = useMemo(() => {
+    return Array.from(new Set(tasks.map(t => t.subject).filter(Boolean)));
+  }, [tasks]);
 
   const counts = {
     all: tasks.length,
@@ -149,17 +257,168 @@ const Tasks: React.FC = () => {
     high: tasks.filter(t => t.priority === 'high').length,
   };
 
+  // Calendar Grid Cells Computation
+  const calendarGridDays = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const startingDay = firstDay.getDay(); // 0 = Sunday
+
+    const days: Array<{
+      date: Date;
+      key: string;
+      dayNumber: number;
+      isCurrentMonth: boolean;
+      isToday: boolean;
+      isSelected: boolean;
+      tasks: Task[];
+    }> = [];
+
+    const todayKey = getTodayKey();
+
+    // Previous month filler
+    const prevMonthLastDate = new Date(year, month, 0).getDate();
+    for (let i = startingDay - 1; i >= 0; i--) {
+      const d = new Date(year, month - 1, prevMonthLastDate - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      days.push({
+        date: d,
+        key,
+        dayNumber: prevMonthLastDate - i,
+        isCurrentMonth: false,
+        isToday: key === todayKey,
+        isSelected: key === selectedDateKey,
+        tasks: tasksByDate[key] || [],
+      });
+    }
+
+    // Current month days
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    for (let i = 1; i <= totalDays; i++) {
+      const d = new Date(year, month, i);
+      const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      days.push({
+        date: d,
+        key,
+        dayNumber: i,
+        isCurrentMonth: true,
+        isToday: key === todayKey,
+        isSelected: key === selectedDateKey,
+        tasks: tasksByDate[key] || [],
+      });
+    }
+
+    // Next month filler
+    const totalCells = days.length <= 35 ? 35 : 42;
+    const remaining = totalCells - days.length;
+    for (let i = 1; i <= remaining; i++) {
+      const d = new Date(year, month + 1, i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      days.push({
+        date: d,
+        key,
+        dayNumber: i,
+        isCurrentMonth: false,
+        isToday: key === todayKey,
+        isSelected: key === selectedDateKey,
+        tasks: tasksByDate[key] || [],
+      });
+    }
+
+    return days;
+  }, [calendarMonth, selectedDateKey, tasksByDate]);
+
+  // Grouped task categories for List View
+  const groupedTasks = useMemo(() => {
+    const todayKey = getTodayKey();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowKey = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+
+    const overdue: Task[] = [];
+    const today: Task[] = [];
+    const nextDay: Task[] = [];
+    const thisWeek: Task[] = [];
+    const upcoming: Task[] = [];
+    const noDeadline: Task[] = [];
+
+    const weekLimit = new Date();
+    weekLimit.setDate(weekLimit.getDate() + 7);
+
+    filtered.forEach(task => {
+      if (task.status === 'completed') {
+        upcoming.push(task);
+        return;
+      }
+      if (!task.deadline) {
+        noDeadline.push(task);
+        return;
+      }
+      if (isOverdue(task.deadline)) {
+        overdue.push(task);
+        return;
+      }
+      const k = getTaskDateKey(task.deadline);
+      if (k === todayKey) {
+        today.push(task);
+      } else if (k === tomorrowKey) {
+        nextDay.push(task);
+      } else {
+        const d = new Date(task.deadline);
+        if (d <= weekLimit) {
+          thisWeek.push(task);
+        } else {
+          upcoming.push(task);
+        }
+      }
+    });
+
+    return [
+      { id: 'overdue', title: 'Overdue', icon: AlertCircle, color: 'var(--danger)', tasks: overdue },
+      { id: 'today', title: 'Today', icon: CalendarIcon, color: 'var(--accent)', tasks: today },
+      { id: 'tomorrow', title: 'Tomorrow', icon: CalendarIcon, color: 'var(--warning)', tasks: nextDay },
+      { id: 'this_week', title: 'This Week', icon: CalendarIcon, color: 'var(--text-secondary)', tasks: thisWeek },
+      { id: 'upcoming', title: 'Upcoming & Completed', icon: Check, color: 'var(--text-muted)', tasks: upcoming },
+      { id: 'no_deadline', title: 'No Deadline', icon: Clock, color: 'var(--text-muted)', tasks: noDeadline },
+    ].filter(g => g.tasks.length > 0);
+  }, [filtered]);
+
   return (
     <div className="fade-up">
+      {/* Page Header */}
       <div className="page-header">
         <div className="page-header-row">
           <div>
             <h1 className="page-title">Tasks</h1>
-            <p className="page-subtitle">Manage assignments, exams, projects, and study sessions.</p>
+            <p className="page-subtitle">Schedule, track, and complete your academic priorities.</p>
           </div>
-          <button className="btn btn-primary" onClick={openCreate}>
-            <Plus size={16} /> + Add Task
-          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+            {/* View Mode Toggle: Calendar vs List */}
+            <div className="view-mode-toggle">
+              <button
+                type="button"
+                className={`view-mode-btn ${viewMode === 'calendar' ? 'view-mode-btn--active' : ''}`}
+                onClick={() => setViewMode('calendar')}
+                title="Calendar view sorted by day"
+              >
+                <CalendarIcon size={14} /> Calendar
+              </button>
+              <button
+                type="button"
+                className={`view-mode-btn ${viewMode === 'list' ? 'view-mode-btn--active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List view"
+              >
+                <List size={14} /> List
+              </button>
+            </div>
+
+            <button className="btn btn-primary" onClick={openCreate}>
+              <Plus size={16} /> + Add Task
+            </button>
+          </div>
         </div>
       </div>
 
@@ -231,79 +490,388 @@ const Tasks: React.FC = () => {
         </select>
       </div>
 
-      {/* Task list */}
+      {/* Main Content Area */}
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[...Array(4)].map((_, i) => <div key={i} className="skeleton" style={{ height: 72, borderRadius: 'var(--radius-lg)' }} />)}
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon"><Plus size={24} /></div>
-          <p className="empty-state-title">{search ? 'No tasks match your search' : "You don't have any tasks yet."}</p>
-          <p className="empty-state-text">{search ? 'Try a different search term.' : 'Create your first task to get started.'}</p>
-          {!search && <button className="btn btn-primary btn-sm" onClick={openCreate}>+ Add your first task</button>}
+      ) : viewMode === 'calendar' ? (
+        /* ================= CALENDAR VIEW ================= */
+        <div className="task-calendar-layout">
+          {/* Month Calendar Card */}
+          <div className="task-calendar-card">
+            {/* Calendar Navigation */}
+            <div className="task-calendar-nav">
+              <div className="task-calendar-month-title">
+                <CalendarIcon size={18} style={{ color: 'var(--accent)' }} />
+                <span>
+                  {calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleToday}
+                  style={{ padding: '4px 10px', fontSize: 12 }}
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-icon btn-ghost btn-sm"
+                  onClick={handlePrevMonth}
+                  title="Previous month"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-icon btn-ghost btn-sm"
+                  onClick={handleNextMonth}
+                  title="Next month"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Weekday Names */}
+            <div className="task-calendar-weekdays">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(w => (
+                <div key={w} className="task-calendar-weekday">{w}</div>
+              ))}
+            </div>
+
+            {/* Calendar Grid Cells */}
+            <div className="task-calendar-grid">
+              {calendarGridDays.map(day => (
+                <div
+                  key={day.key}
+                  className={`task-cal-cell ${!day.isCurrentMonth ? 'task-cal-cell--outside' : ''} ${day.isToday ? 'task-cal-cell--today' : ''} ${day.isSelected ? 'task-cal-cell--selected' : ''}`}
+                  onClick={() => setSelectedDateKey(day.key)}
+                >
+                  <div className="task-cal-cell-header">
+                    <span className="task-cal-num">{day.dayNumber}</span>
+                    {day.tasks.length > 0 && (
+                      <span className="task-cal-badge" title={`${day.tasks.length} task${day.tasks.length > 1 ? 's' : ''}`}>
+                        {day.tasks.length}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Tasks preview on day cell */}
+                  {day.tasks.length > 0 ? (
+                    <div className="task-cal-chips">
+                      {day.tasks.slice(0, 2).map(t => (
+                        <div
+                          key={t.id}
+                          className={`task-cal-chip ${t.status === 'completed' ? 'task-cal-chip--completed' : ''}`}
+                          title={`${t.title} (${t.subject})`}
+                        >
+                          <span className={`task-dot task-dot--${t.status === 'completed' ? 'completed' : t.priority}`} />
+                          <span>{t.title}</span>
+                        </div>
+                      ))}
+                      {day.tasks.length > 2 && (
+                        <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontWeight: 600 }}>
+                          +{day.tasks.length - 2} more
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                      <button
+                        type="button"
+                        style={{
+                          opacity: 0.35,
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 2,
+                          color: 'var(--text-muted)',
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDateKey(day.key);
+                          openCreateForDate(day.key);
+                        }}
+                        title={`Schedule task on ${day.key}`}
+                      >
+                        <Plus size={13} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Selected Day Task Panel */}
+          <div className="calendar-day-panel">
+            <div className="calendar-day-header">
+              <div>
+                <h3 className="calendar-day-title">{formatSelectedDateTitle(selectedDateKey)}</h3>
+                <p className="calendar-day-subtitle">
+                  {selectedDateTasks.length === 0
+                    ? 'No tasks scheduled'
+                    : `${selectedDateTasks.length} task${selectedDateTasks.length > 1 ? 's' : ''} (${selectedDateTasks.filter(t => t.status === 'completed').length} done)`}
+                </p>
+              </div>
+
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => openCreateForDate(selectedDateKey)}
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                <Plus size={14} /> Add Task
+              </button>
+            </div>
+
+            {selectedDateTasks.length === 0 ? (
+              <div className="empty-state" style={{ padding: 'var(--space-6) var(--space-4)' }}>
+                <div className="empty-state-icon" style={{ width: 44, height: 44, margin: '0 auto 12px' }}>
+                  <CalendarPlus size={22} />
+                </div>
+                <p className="empty-state-title" style={{ fontSize: 14 }}>No tasks for this day</p>
+                <p className="empty-state-text" style={{ fontSize: 12, marginBottom: 12 }}>
+                  Click below to plan an assignment, exam review, or study session for this day.
+                </p>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => openCreateForDate(selectedDateKey)}
+                >
+                  + Add Task for {formatSelectedDateTitle(selectedDateKey).split('—')[0].trim()}
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                {selectedDateTasks.map(task => (
+                  <div
+                    key={task.id}
+                    className={`task-item ${task.status === 'completed' ? 'task-item--completed' : ''}`}
+                    style={{ padding: '10px 12px' }}
+                  >
+                    <button
+                      className={`task-check ${task.status === 'completed' ? 'task-check--done' : ''}`}
+                      onClick={(e) => handleComplete(task, e)}
+                      title={task.status === 'completed' ? 'Mark incomplete' : 'Mark complete'}
+                    >
+                      {task.status === 'completed' && <Check size={12} />}
+                    </button>
+
+                    <Link to={`/tasks/${task.id}`} style={{ flex: 1, minWidth: 0, textDecoration: 'none' }}>
+                      <p style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: task.status === 'completed' ? 'var(--text-muted)' : 'var(--text-primary)',
+                        textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                        marginBottom: 4,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {task.title}
+                      </p>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span className="badge badge-accent" style={{ fontSize: 10, padding: '1px 6px' }}>
+                          {task.subject}
+                        </span>
+                        <span className={`badge badge-priority-${task.priority}`} style={{ fontSize: 10, padding: '1px 6px' }}>
+                          {task.priority}
+                        </span>
+                        {task.estimated_minutes && (
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                            <Clock size={11} /> {task.estimated_minutes}m
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <button
+                        className="btn btn-icon btn-ghost btn-sm"
+                        onClick={(e) => openEdit(task, e)}
+                        title="Edit task"
+                      >
+                        <Edit2 size={13} />
+                      </button>
+                      <button
+                        className="btn btn-icon btn-ghost btn-sm"
+                        style={{ color: 'var(--danger)' }}
+                        onClick={() => setDeleteConfirm(task.id)}
+                        title="Delete task"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-          {filtered.map(task => (
-            <Link
-              to={`/tasks/${task.id}`}
-              key={task.id}
-              className={`task-item ${task.status === 'completed' ? 'task-item--completed' : ''}`}
-              style={{ textDecoration: 'none' }}
+        /* ================= LIST VIEW (WITH DAY SORTING) ================= */
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              Showing {filtered.length} task{filtered.length !== 1 ? 's' : ''}
+            </span>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setGroupByDay(!groupByDay)}
+              style={{ fontSize: 12 }}
             >
-              <button
-                className={`task-check ${task.status === 'completed' ? 'task-check--done' : ''}`}
-                onClick={e => handleComplete(task, e)}
-                title={task.status === 'completed' ? 'Mark incomplete' : 'Mark complete'}
-              >
-                {task.status === 'completed' && <Check size={13} />}
-              </button>
+              {groupByDay ? 'Ungroup List' : 'Group by Day'}
+            </button>
+          </div>
 
-              <div className="task-content">
-                <div className="task-title">
-                  {getTaskTypeIcon(task.task_type)} {task.title}
+          {filtered.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon"><Plus size={24} /></div>
+              <p className="empty-state-title">{search ? 'No tasks match your search' : "You don't have any tasks yet."}</p>
+              <p className="empty-state-text">{search ? 'Try a different search term.' : 'Create your first task to get started.'}</p>
+              {!search && <button className="btn btn-primary btn-sm" onClick={openCreate}>+ Add your first task</button>}
+            </div>
+          ) : groupByDay ? (
+            groupedTasks.map(group => (
+              <div key={group.id} className="task-group-section">
+                <div className="task-group-title" style={{ color: group.color }}>
+                  <group.icon size={14} />
+                  <span>{group.title}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500 }}>
+                    ({group.tasks.length})
+                  </span>
                 </div>
-                <div className="task-meta">
-                  <span className="task-meta-item">{task.subject}</span>
-                  <span className="task-meta-item">·</span>
-                  <span className="task-meta-item" style={{ textTransform: 'capitalize' }}>{task.task_type}</span>
-                  {task.deadline && (
-                    <>
-                      <span className="task-meta-item">·</span>
-                      <span className="task-meta-item" style={{ color: isOverdue(task.deadline) ? 'var(--danger)' : 'var(--text-muted)' }}>
-                        <Calendar size={11} />{formatDeadline(task.deadline)}
-                      </span>
-                    </>
-                  )}
-                  {task.estimated_minutes && (
-                    <>
-                      <span className="task-meta-item">·</span>
-                      <span className="task-meta-item"><Clock size={11} />{task.estimated_minutes}min</span>
-                    </>
-                  )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                  {group.tasks.map(task => (
+                    <Link
+                      to={`/tasks/${task.id}`}
+                      key={task.id}
+                      className={`task-item ${task.status === 'completed' ? 'task-item--completed' : ''}`}
+                      style={{ textDecoration: 'none' }}
+                    >
+                      <button
+                        className={`task-check ${task.status === 'completed' ? 'task-check--done' : ''}`}
+                        onClick={e => handleComplete(task, e)}
+                        title={task.status === 'completed' ? 'Mark incomplete' : 'Mark complete'}
+                      >
+                        {task.status === 'completed' && <Check size={13} />}
+                      </button>
+
+                      <div className="task-content">
+                        <div className="task-title">
+                          {getTaskTypeIcon(task.task_type)} {task.title}
+                        </div>
+                        <div className="task-meta">
+                          <span className="task-meta-item">{task.subject}</span>
+                          <span className="task-meta-item">·</span>
+                          <span className="task-meta-item" style={{ textTransform: 'capitalize' }}>{task.task_type}</span>
+                          {task.deadline && (
+                            <>
+                              <span className="task-meta-item">·</span>
+                              <span className="task-meta-item" style={{ color: isOverdue(task.deadline) ? 'var(--danger)' : 'var(--text-muted)' }}>
+                                <CalendarIcon size={11} />{formatDeadline(task.deadline)}
+                              </span>
+                            </>
+                          )}
+                          {task.estimated_minutes && (
+                            <>
+                              <span className="task-meta-item">·</span>
+                              <span className="task-meta-item"><Clock size={11} />{task.estimated_minutes}min</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}>
+                        <span className={`badge badge-${task.priority}`}>{task.priority}</span>
+                        <div className="task-actions">
+                          <button className="btn btn-icon btn-ghost" onClick={e => openEdit(task, e)} title="Edit">
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            className="btn btn-icon btn-ghost"
+                            style={{ color: 'var(--danger)' }}
+                            onClick={e => { e.stopPropagation(); e.preventDefault(); setDeleteConfirm(task.id); }}
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}>
-                <span className={`badge badge-${task.priority}`}>{task.priority}</span>
-                <span className={`badge badge-${task.status}`} style={{ display: 'none' }}>{task.status.replace('_', ' ')}</span>
-                <div className="task-actions">
-                  <button className="btn btn-icon btn-ghost" onClick={e => openEdit(task, e)} title="Edit">
-                    <Edit2 size={14} />
-                  </button>
+            ))
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              {filtered.map(task => (
+                <Link
+                  to={`/tasks/${task.id}`}
+                  key={task.id}
+                  className={`task-item ${task.status === 'completed' ? 'task-item--completed' : ''}`}
+                  style={{ textDecoration: 'none' }}
+                >
                   <button
-                    className="btn btn-icon btn-ghost"
-                    style={{ color: 'var(--danger)' }}
-                    onClick={e => { e.stopPropagation(); e.preventDefault(); setDeleteConfirm(task.id); }}
-                    title="Delete"
+                    className={`task-check ${task.status === 'completed' ? 'task-check--done' : ''}`}
+                    onClick={e => handleComplete(task, e)}
+                    title={task.status === 'completed' ? 'Mark incomplete' : 'Mark complete'}
                   >
-                    <Trash2 size={14} />
+                    {task.status === 'completed' && <Check size={13} />}
                   </button>
-                </div>
-              </div>
-            </Link>
-          ))}
+
+                  <div className="task-content">
+                    <div className="task-title">
+                      {getTaskTypeIcon(task.task_type)} {task.title}
+                    </div>
+                    <div className="task-meta">
+                      <span className="task-meta-item">{task.subject}</span>
+                      <span className="task-meta-item">·</span>
+                      <span className="task-meta-item" style={{ textTransform: 'capitalize' }}>{task.task_type}</span>
+                      {task.deadline && (
+                        <>
+                          <span className="task-meta-item">·</span>
+                          <span className="task-meta-item" style={{ color: isOverdue(task.deadline) ? 'var(--danger)' : 'var(--text-muted)' }}>
+                            <CalendarIcon size={11} />{formatDeadline(task.deadline)}
+                          </span>
+                        </>
+                      )}
+                      {task.estimated_minutes && (
+                        <>
+                          <span className="task-meta-item">·</span>
+                          <span className="task-meta-item"><Clock size={11} />{task.estimated_minutes}min</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}>
+                    <span className={`badge badge-${task.priority}`}>{task.priority}</span>
+                    <div className="task-actions">
+                      <button className="btn btn-icon btn-ghost" onClick={e => openEdit(task, e)} title="Edit">
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        className="btn btn-icon btn-ghost"
+                        style={{ color: 'var(--danger)' }}
+                        onClick={e => { e.stopPropagation(); e.preventDefault(); setDeleteConfirm(task.id); }}
+                        title="Delete"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
