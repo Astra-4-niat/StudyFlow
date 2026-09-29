@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, CheckSquare, BookOpen, Bot, Brain, TrendingUp, Settings,
-  LogOut, Menu, X, GraduationCap, ChevronRight, type LucideIcon
+  LogOut, Menu, X, ChevronRight, type LucideIcon
 } from 'lucide-react';
+import { BrandLogo } from '../common/BrandLogo';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -79,15 +80,9 @@ export const AppLayout: React.FC = () => {
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'sidebar--open' : ''}`}>
         <div className="sidebar-header">
-          <div className="brand">
-            <div className="brand-icon">
-              <GraduationCap size={20} />
-            </div>
-            <div className="brand-text">
-              <span className="brand-name">StudyFlow</span>
-              <span className="brand-ai">AI</span>
-            </div>
-          </div>
+          <NavLink to="/dashboard" style={{ textDecoration: 'none' }}>
+            <BrandLogo size="md" />
+          </NavLink>
           <button className="sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar">
             <X size={18} />
           </button>
@@ -147,10 +142,9 @@ export const AppLayout: React.FC = () => {
           <button className="hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
             <Menu size={22} />
           </button>
-          <div className="brand brand--mobile">
-            <GraduationCap size={18} />
-            <span>StudyFlow AI</span>
-          </div>
+          <NavLink to="/dashboard" style={{ textDecoration: 'none' }}>
+            <BrandLogo size="sm" />
+          </NavLink>
           <div className="user-avatar user-avatar--sm">{initials}</div>
         </header>
 

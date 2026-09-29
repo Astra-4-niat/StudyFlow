@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { GraduationCap, CheckCircle, Calendar, Bot, Brain, TrendingUp, ArrowRight, Zap, Shield, BookOpen } from 'lucide-react';
+import { CheckCircle, Calendar, Bot, Brain, TrendingUp, ArrowRight, Zap, Shield, BookOpen } from 'lucide-react';
+import { BrandLogo } from '../components/common/BrandLogo';
 import './Landing.css';
 
 const features = [
@@ -24,13 +25,9 @@ const Landing: React.FC = () => {
       {/* Navbar */}
       <nav className="landing-nav">
         <div className="landing-nav-inner">
-          <div className="brand">
-            <div className="brand-icon"><GraduationCap size={20} /></div>
-            <div className="brand-text">
-              <span className="brand-name">StudyFlow</span>
-              <span className="brand-ai">AI</span>
-            </div>
-          </div>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <BrandLogo size="md" />
+          </Link>
           <div className="landing-nav-actions">
             <Link to="/login" className="btn btn-ghost">Sign in</Link>
             <Link to="/signup" className="btn btn-primary btn-sm">Get Started</Link>
@@ -178,14 +175,10 @@ const Landing: React.FC = () => {
       {/* Footer */}
       <footer className="landing-footer">
         <div className="landing-container">
-          <div className="brand">
-            <div className="brand-icon"><GraduationCap size={16} /></div>
-            <div className="brand-text">
-              <span className="brand-name" style={{ fontSize: '13px' }}>StudyFlow</span>
-              <span className="brand-ai">AI</span>
-            </div>
-          </div>
-          <p className="footer-copy">© 2026 StudyFlow AI. Built with React, Node.js, Supabase & Google Gemini.</p>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <BrandLogo size="sm" />
+          </Link>
+          <p className="footer-copy">© 2026 StudyFlow AI. Intelligent Academic Command Center.</p>
         </div>
       </footer>
     </div>

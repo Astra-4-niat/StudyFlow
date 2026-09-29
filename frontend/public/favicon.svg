@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- Background Squircle Gradient -->
+    <linearGradient id="sfBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#0c1222"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+
+    <!-- Outer Rim Stroke -->
+    <linearGradient id="sfRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(56, 189, 248, 0.45)"/>
+      <stop offset="50%" stop-color="rgba(99, 102, 241, 0.25)"/>
+      <stop offset="100%" stop-color="rgba(168, 85, 247, 0.35)"/>
+    </linearGradient>
+
+    <!-- Flow Loop Gradient -->
+    <linearGradient id="sfFlowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="45%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+
+    <!-- AI Sparkle Gradient -->
+    <linearGradient id="sfSparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#e0f2fe"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+
+    <!-- Neural Glow Filter -->
+    <filter id="sfGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Base Canvas -->
+  <rect width="64" height="64" rx="18" fill="url(#sfBgGrad)"/>
+  <rect width="64" height="64" rx="18" fill="none" stroke="url(#sfRimGrad)" stroke-width="1.5"/>
+
+  <!-- Academic Neural Orbit Path (Subtle flow guides) -->
+  <path d="M16 38 C 16 26, 26 18, 36 18 C 44 18, 48 24, 48 30 C 48 38, 38 46, 28 46 C 20 46, 16 42, 16 38 Z"
+        fill="none"
+        stroke="rgba(56, 189, 248, 0.15)"
+        stroke-width="3"
+        stroke-linecap="round"/>
+
+  <!-- Dynamic S-Flow Ribbon: Represents "Study Flow" -->
+  <path d="M19 44 C 15 40, 15 32, 22 26 C 28 21, 36 21, 42 16 C 45 13, 44 9, 39 9 C 32 9, 29 14, 28 17"
+        fill="none"
+        stroke="url(#sfFlowGrad)"
+        stroke-width="4.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Inverse Flow Bridge (creates continuous double-loop flow) -->
+  <path d="M45 20 C 49 24, 49 32, 42 38 C 36 43, 28 43, 22 48 C 19 51, 20 55, 25 55 C 32 55, 35 50, 36 47"
+        fill="none"
+        stroke="url(#sfFlowGrad)"
+        stroke-width="4.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Neural Connection Nodes -->
+  <circle cx="28" cy="17" r="2.5" fill="#38bdf8"/>
+  <circle cx="36" cy="47" r="2.5" fill="#a855f7"/>
+
+  <!-- Central AI Intelligence Spark (4-Point Star) -->
+  <g filter="url(#sfGlow)">
+    <path d="M32 20 C 32 27, 39 32, 46 32 C 39 32, 32 37, 32 44 C 32 37, 25 32, 18 32 C 25 32, 32 27, 32 20 Z"
+          fill="url(#sfSparkGrad)"/>
+    <circle cx="32" cy="32" r="2.5" fill="#ffffff"/>
+  </g>
+
+  <!-- Micro AI Satellites (Knowledge Synapses) -->
+  <circle cx="43" cy="22" r="1.5" fill="#38bdf8" opacity="0.9"/>
+  <circle cx="21" cy="42" r="1.5" fill="#c084fc" opacity="0.9"/>
+</svg>

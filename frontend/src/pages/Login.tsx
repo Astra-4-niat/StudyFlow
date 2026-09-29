@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { GraduationCap, Mail, Lock, Eye, EyeOff, CheckCircle, KeyRound, ExternalLink, Copy, Clock } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, CheckCircle, KeyRound, ExternalLink, Copy, Clock } from 'lucide-react';
+import { BrandLogo } from '../components/common/BrandLogo';
 import { useAuth } from '../contexts/AuthContext';
 import { Modal } from '../components/Modal';
 import api from '../lib/api';
@@ -107,12 +108,8 @@ const Login: React.FC = () => {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-header">
-          <Link to="/" className="brand" style={{ justifyContent: 'center', marginBottom: '24px' }}>
-            <div className="brand-icon"><GraduationCap size={20} /></div>
-            <div className="brand-text">
-              <span className="brand-name">StudyFlow</span>
-              <span className="brand-ai">AI</span>
-            </div>
+          <Link to="/" style={{ display: 'inline-flex', justifyContent: 'center', marginBottom: '24px', textDecoration: 'none' }}>
+            <BrandLogo size="lg" />
           </Link>
           <h1 className="auth-title">Welcome back</h1>
           <p className="auth-subtitle">Sign in to your academic workspace</p>

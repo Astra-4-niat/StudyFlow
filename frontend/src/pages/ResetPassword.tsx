@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { GraduationCap, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { BrandLogo } from '../components/common/BrandLogo';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import './Auth.css';
@@ -69,12 +70,8 @@ export const ResetPassword: React.FC = () => {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-header">
-          <Link to="/" className="brand" style={{ justifyContent: 'center', marginBottom: '24px' }}>
-            <div className="brand-icon"><GraduationCap size={20} /></div>
-            <div className="brand-text">
-              <span className="brand-name">StudyFlow</span>
-              <span className="brand-ai">AI</span>
-            </div>
+          <Link to="/" style={{ display: 'inline-flex', justifyContent: 'center', marginBottom: '24px', textDecoration: 'none' }}>
+            <BrandLogo size="lg" />
           </Link>
           <h1 className="auth-title">Create New Password</h1>
           <p className="auth-subtitle">Enter your new secure password below</p>
