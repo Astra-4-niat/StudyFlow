@@ -3,16 +3,32 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'placeholder-anon-key';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'placeholder-anon-key';
+const cleanEnvVar = (val?: string): string => {
+  if (!val) return '';
+  return val.trim().split(/[\s\r\n]+/)[0].replace(/['";]/g, '');
+};
 
-export const isSupabaseConfigured = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY);
+// Check if GEMINI_API_KEY was accidentally pasted into SUPABASE_SERVICE_ROLE_KEY
+const rawServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+if (rawServiceKey.includes('GEMINI_API_KEY=')) {
+  const match = rawServiceKey.match(/GEMINI_API_KEY=\s*([^\s\r\n]+)/);
+  if (match && (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'placeholder-key')) {
+    process.env.GEMINI_API_KEY = match[1].replace(/['";]/g, '').trim();
+  }
+}
+
+const supabaseUrl = cleanEnvVar(process.env.SUPABASE_URL) || 'https://placeholder.supabase.co';
+const supabaseServiceKey = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) || cleanEnvVar(process.env.SUPABASE_ANON_KEY) || 'placeholder-anon-key';
+const supabaseAnonKey = cleanEnvVar(process.env.SUPABASE_ANON_KEY) || 'placeholder-anon-key';
+
+export const isSupabaseConfigured = Boolean(
+  cleanEnvVar(process.env.SUPABASE_URL) && cleanEnvVar(process.env.SUPABASE_ANON_KEY)
+);
 
 export const hasServiceRoleKey = Boolean(
-  process.env.SUPABASE_SERVICE_ROLE_KEY &&
-  process.env.SUPABASE_SERVICE_ROLE_KEY !== 'placeholder-anon-key' &&
-  process.env.SUPABASE_SERVICE_ROLE_KEY !== process.env.SUPABASE_ANON_KEY
+  cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) &&
+  cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) !== 'placeholder-anon-key' &&
+  cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) !== cleanEnvVar(process.env.SUPABASE_ANON_KEY)
 );
 
 // Service client for admin operations (server-side only)

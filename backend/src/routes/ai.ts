@@ -7,7 +7,6 @@ import { AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'placeholder-key');
 const CANDIDATE_MODELS = [
   'gemini-3.6-flash',
   'gemini-3.5-flash',
@@ -18,11 +17,27 @@ const CANDIDATE_MODELS = [
 
 const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
+const getCleanGeminiKey = (): string => {
+  let key = process.env.GEMINI_API_KEY || '';
+  if (!key && process.env.SUPABASE_SERVICE_ROLE_KEY?.includes('GEMINI_API_KEY=')) {
+    const match = process.env.SUPABASE_SERVICE_ROLE_KEY.match(/GEMINI_API_KEY=\s*([^\s\r\n]+)/);
+    if (match) key = match[1];
+  }
+  return key.trim().split(/[\s\r\n]+/)[0].replace(/^GEMINI_API_KEY=/i, '').replace(/['";]/g, '');
+};
+
+const getGenAI = (): GoogleGenerativeAI => {
+  const apiKey = getCleanGeminiKey();
+  return new GoogleGenerativeAI(apiKey || 'placeholder-key');
+};
+
 // Helper: call Gemini with automatic model failover on temporary 503/429/404
 async function callGemini(prompt: string): Promise<string> {
-  if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'placeholder-key') {
+  const apiKey = getCleanGeminiKey();
+  if (!apiKey || apiKey === 'placeholder-key') {
     throw new Error('GEMINI_API_KEY is not configured in environment variables.');
   }
+  const genAI = getGenAI();
   let lastErr: any;
   for (const modelName of CANDIDATE_MODELS) {
     try {
@@ -44,6 +59,11 @@ async function callGemini(prompt: string): Promise<string> {
 
 // Helper: run Copilot chat with multi-model fallback
 async function runCopilotChat(message: string, history: { role: 'user' | 'model'; content: string }[], systemPrompt: string): Promise<string> {
+  const apiKey = getCleanGeminiKey();
+  if (!apiKey || apiKey === 'placeholder-key') {
+    throw new Error('GEMINI_API_KEY is not configured in environment variables.');
+  }
+  const genAI = getGenAI();
   let lastErr: any;
   for (const modelName of CANDIDATE_MODELS) {
     try {
