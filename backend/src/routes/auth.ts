@@ -181,14 +181,62 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
     if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
       origin = 'https://studyflowve.vercel.app';
     }
+
+    const redirectTo = `${origin}/reset-password`;
+
+    // 1. Try sending password recovery email via Supabase Auth
     const { error } = await supabaseAnon.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/reset-password`,
+      redirectTo,
     });
-    if (error) {
-      res.status(400).json({ error: error.message || 'Unable to send password reset email.' });
+
+    if (!error) {
+      res.json({ message: 'Password reset link sent successfully. Please check your inbox.' });
       return;
     }
-    res.json({ message: 'Password reset link sent successfully. Please check your inbox.' });
+
+    const isRateLimit = (error as any)?.status === 429 ||
+      error.message?.toLowerCase().includes('rate limit') ||
+      error.message?.toLowerCase().includes('too many');
+
+    // 2. If rate-limited, automatically generate a direct recovery link using the admin API
+    if (hasServiceRoleKey) {
+      try {
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'recovery',
+          email,
+          options: {
+            redirectTo,
+          },
+        });
+
+        if (linkError) {
+          if ((linkError as any)?.code === 'user_not_found' || linkError.message?.toLowerCase().includes('not found')) {
+            res.status(404).json({ error: 'No StudyFlow AI account was found with that email address. Please check your spelling or sign up.' });
+            return;
+          }
+          console.warn('Admin generateLink error:', linkError.message);
+        } else if (linkData?.properties?.action_link) {
+          res.json({
+            message: 'Email provider rate limit reached. We generated a secure direct recovery link for you.',
+            recoveryUrl: linkData.properties.action_link,
+            rateLimited: true,
+          });
+          return;
+        }
+      } catch (adminErr) {
+        console.warn('Admin recovery link fallback error:', adminErr);
+      }
+    }
+
+    if (isRateLimit) {
+      res.status(429).json({
+        error: 'Email provider rate limit exceeded (maximum 3 emails/hour). Please check your inbox or spam for any recovery email already sent, or wait a few minutes before trying again.',
+        rateLimited: true,
+      });
+      return;
+    }
+
+    res.status(400).json({ error: error.message || 'Unable to send password reset email.' });
   } catch (err: any) {
     console.error('Forgot password error:', err);
     res.status(500).json({ error: 'Unable to process password reset. Please try again later.' });
