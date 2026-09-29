@@ -1,387 +1,489 @@
-StudyFlow AI 🎓✨
+<div align="center">
+
+<img src="frontend/public/icons/studyflow-logo.png" width="110" alt="StudyFlow AI Logo">
+
+# StudyFlow AI 🎓
+
+### Plan smarter. Study better. Achieve more.
+
+An AI-powered academic command center that brings **tasks, study planning, AI assistance, quizzes, study sessions, and progress tracking** into one modern student-focused platform.
+
+<br>
+
+<a href="https://studyflowve.vercel.app">
+  <img src="https://img.shields.io/badge/🚀%20LIVE%20DEMO-StudyFlow%20AI-7C5CFC?style=for-the-badge" alt="Live Demo">
+</a>
+&nbsp;
+<a href="https://github.com/shreyash-bhosale/StudyFlow">
+  <img src="https://img.shields.io/badge/💻%20SOURCE%20CODE-GitHub-181717?style=for-the-badge&logo=github" alt="GitHub">
+</a>
+
+<br><br>
+
+<img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black">
+<img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white">
+<img src="https://img.shields.io/badge/Node.js-20+-339933?style=flat-square&logo=node.js&logoColor=white">
+<img src="https://img.shields.io/badge/Express.js-000000?style=flat-square&logo=express&logoColor=white">
+<img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white">
+<img src="https://img.shields.io/badge/Gemini%20AI-4285F4?style=flat-square&logo=google&logoColor=white">
+<img src="https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white">
+
+<br><br>
+
+**A full-stack AI study platform built from the ground up.**
+
+</div>
+
+---
+
+## 🌐 Live Application
+
+<div align="center">
+
+### 🚀 [Open StudyFlow AI](https://studyflowve.vercel.app)
+
+**Production deployment • Full-stack application • AI-powered workflows**
+
+</div>
+
+---
+
+# 📸 Product Preview
+
+## 🖥️ Web Dashboard
 
 <p align="center">
-  <img src="frontend/public/icons/studyflow-logo.png" alt="StudyFlow AI Logo" width="100" height="100" />
-</p>
-
-<h3 align="center">An AI-powered academic command center built for modern students.</h3>
-
-<p align="center">
-  Plan smarter. Study better. Track progress. Learn with AI.
+  <img src="docs/screenshots/dashboard-web.png" alt="Screenshot of the StudyFlow AI web dashboard showing tasks, study statistics, today's focus, and upcoming deadlines." width="95%">
 </p>
 
 <p align="center">
-  <a href="https://studyflowve.vercel.app">
-    <img src="https://img.shields.io/badge/Live%20Demo-StudyFlow%20AI-7C5CFC?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
-  </a>
-  <a href="https://github.com/shreyash-bhosale/StudyFlow">
-    <img src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Repository" />
-  </a>
+  <em>Your academic command center — tasks, deadlines, study time and progress at a glance.</em>
+</p>
+
+---
+
+## 📱 Mobile Experience
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-mobile.png" alt="Screenshot of the StudyFlow AI mobile dashboard." width="35%">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
-  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Node.js-20+-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js" />
-  <img src="https://img.shields.io/badge/Express.js-000000?style=flat-square&logo=express&logoColor=white" alt="Express" />
-  <img src="https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" />
-  <img src="https://img.shields.io/badge/Google%20Gemini-AI-4285F4?style=flat-square&logo=google&logoColor=white" alt="Gemini" />
-  <img src="https://img.shields.io/badge/Vercel-Deployed-000000?style=flat-square&logo=vercel&logoColor=white" alt="Vercel" />
+  <em>Responsive, touch-friendly and designed for studying on the go.</em>
 </p>
 
-📌 Overview
+---
+
+## 🧠 AI-Powered Features
+
+<div align="center">
+
+| 🤖 AI Copilot | 📝 Quiz Generator | 📅 Study Planner | 🧩 Task Breakdown |
+|:---:|:---:|:---:|:---:|
+| Academic assistance | AI-generated quizzes | Personalized plans | Actionable milestones |
+
+</div>
+
+---
+
+# ✨ Why StudyFlow?
+
+Students often have their academic life spread across multiple tools:
+
+```text
+┌──────────────┐
+│   Calendar   │
+└──────┬───────┘
+       │
+┌──────▼───────┐
+│ Task Manager │
+└──────┬───────┘
+       │
+┌──────▼───────┐
+│     Notes    │
+└──────┬───────┘
+       │
+┌──────▼───────┐
+│ AI Assistant │
+└──────┬───────┘
+       │
+┌──────▼───────┐
+│    Quizzes   │
+└──────┬───────┘
+       │
+┌──────▼───────┐
+│   Progress   │
+└──────────────┘
+```
+
+### StudyFlow brings these workflows together.
+
+```text
+                     🎓 STUDYFLOW AI
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+        ▼                  ▼                  ▼
+   📋 ORGANIZE         🤖 LEARN          📊 IMPROVE
+        │                  │                  │
+     Tasks            AI Copilot         Progress
+     Deadlines        Quiz Generator     Study Time
+     Priorities       Study Planner      Completion
+     Subjects         Task Breakdown     Insights
+```
+
+---
+
+# 🚀 Features
+
+## 📋 Smart Task Management
+
+Manage your academic workload from a single workspace.
+
+**Capabilities**
+
+- Create tasks
+- Edit tasks
+- Delete tasks
+- Complete tasks
+- Set priorities
+- Add subjects
+- Add deadlines
+- View active tasks
+- View completed tasks
+- Identify today's focus
+- Track upcoming deadlines
+
+---
+
+## 🤖 AI Copilot
+
+An academic AI assistant powered by Google Gemini.
+
+Use it for:
+
+- Concept explanations
+- Study guidance
+- Revision help
+- Academic questions
+- Planning assistance
+- Context-aware study support
+
+### Request flow
+
+```mermaid
+flowchart LR
+    A[Student] --> B[AI Copilot]
+    B --> C[Express API]
+    C --> D[Request Validation]
+    D --> E[Google Gemini]
+    E --> F[Structured Response]
+    F --> B
+    B --> A
+```
+
+---
+
+## 🧠 AI Quiz Generator
+
+Turn any topic into an interactive practice session.
+
+```mermaid
+flowchart TD
+    A[Choose Subject / Topic] --> B[Configure Quiz]
+    B --> C[Send Request]
+    C --> D[Backend]
+    D --> E[Gemini AI]
+    E --> F[Generate Questions]
+    F --> G[Quiz Interface]
+    G --> H[Submit Answers]
+    H --> I[Score & Explanations]
+    I --> J[Save Quiz]
+```
 
-StudyFlow AI is a full-stack AI-powered study management platform designed to help students organize academic work, create personalized study plans, test their knowledge, and monitor progress from one place.
+### Quiz workflow
 
-Instead of using separate tools for assignments, study schedules, revision, quizzes, and academic assistance, StudyFlow brings these workflows together into a single command center.
+**Choose topic → Generate → Attempt → Score → Review → Improve**
 
-The application combines:
+---
 
-📋 Task management
+## 📅 AI Study Planner
 
-🤖 AI academic assistance
+Generate structured study schedules based on academic requirements.
 
-🧠 AI-generated quizzes
+The planner can work with information such as:
 
-📅 Personalized study planning
+- Subjects
+- Topics
+- Exam dates
+- Available study time
+- Priorities
+- Academic goals
 
-⏱️ Study-session tracking
+```mermaid
+flowchart TD
+    A[Academic Goals] --> B[Subjects]
+    B --> C[Topics]
+    C --> D[Exam / Deadline]
+    D --> E[Available Study Time]
+    E --> F[Gemini AI]
+    F --> G[Structured Study Plan]
+    G --> H[Daily Milestones]
+    H --> I[StudyFlow Tasks]
+```
 
-📊 Progress insights
+---
 
-🔐 Authentication
+## 🧩 AI Task Breakdown
 
-☁️ Supabase-backed persistence
+Large assignments can become difficult when treated as one giant task.
 
-📱 Responsive/PWA-oriented experience
+StudyFlow can transform them into smaller actionable milestones.
 
-⚡ Production deployment on Vercel
+```text
+                    Large Assignment
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │    Gemini AI     │
+                  └────────┬────────┘
+                           │
+            ┌──────────────┼──────────────┐
+            ▼              ▼              ▼
+       Research        Development      Testing
+            │              │              │
+            ▼              ▼              ▼
+        Milestone 1     Milestone 2     Milestone 3
+            │              │              │
+            └──────────────┼──────────────┘
+                           ▼
+                     Completed Task
+```
+
+---
+
+# 📊 Progress Dashboard
 
-Live application: studyflowve.vercel.app
+StudyFlow turns raw academic activity into simple visual insights.
 
-✨ Core Features
+### Dashboard metrics include:
 
-1. 📋 Smart Task Management
+- Total tasks
+- Active tasks
+- Completed tasks
+- Completion rate
+- Upcoming deadlines
+- Study time
+- Today's focus
+- Academic activity
 
-Create and manage academic tasks with useful metadata.
+The goal is simple:
+
+> **Know what needs to be done, what has been completed, and what needs attention next.**
 
-Supported workflows
+---
 
-Create tasks
+# ⏱️ Study Sessions
 
-Edit tasks
-
-Delete tasks
-
-Mark tasks as completed
-
-Assign subjects/categories
-
-Set priorities
-
-Add deadlines
-
-Track active and completed work
-
-View today's focus
-
-View upcoming deadlines
-
-The dashboard automatically turns task data into useful academic summaries.
-
-2. 🤖 AI Copilot
-
-StudyFlow includes an AI-powered academic assistant backed by Google Gemini.
-
-The Copilot can help students with:
-
-Concept explanations
-
-Study guidance
-
-Academic questions
-
-Revision assistance
-
-Planning suggestions
-
-Context-aware academic support
-
-The application keeps normal productivity functionality separate from AI functionality so that AI-related failures do not prevent users from managing their academic data.
-
-3. 🧠 AI Quiz Generator
-
-Generate interactive quizzes from a selected subject or topic.
-
-Quiz workflow
-
-Enter a subject/topic.
-
-Select the desired difficulty/settings.
-
-Generate questions using Gemini.
-
-Attempt the quiz.
-
-Receive a score.
-
-Review answers and explanations.
-
-Store quiz data for later reference.
-
-This turns StudyFlow from a simple task manager into a revision and self-assessment platform.
-
-4. 📅 AI Study Planner
-
-StudyFlow can generate structured study plans based on academic requirements.
-
-The planner can use information such as:
-
-Subjects
-
-Topics
-
-Exam dates
-
-Available study time
-
-Priorities
-
-Academic goals
-
-The generated plan is converted into actionable study milestones instead of leaving the student with a generic AI response.
-
-5. 🧩 AI Task Breakdown
-
-Large assignments can be difficult to approach.
-
-StudyFlow can use AI to break a larger task into smaller milestones and actionable steps.
-
-Example:
-
-Build a Python project
-        ↓
-1. Define requirements
-2. Design the project structure
-3. Implement core functionality
-4. Add validation
-5. Test the application
-6. Fix issues
-7. Document the project
-
-This helps transform large academic goals into manageable actions.
-
-6. ⏱️ Study Session Tracking
-
-Students can record study sessions and monitor how much time they are actually spending on academic work.
-
-Tracked information can contribute to:
-
-Study-time summaries
-
-Progress insights
-
-Dashboard statistics
-
-Personal productivity analysis
-
-7. 📊 Progress Dashboard
-
-The dashboard provides an overview of academic activity.
-
-Example metrics
-
-Total tasks
-
-Active tasks
-
-Completed tasks
-
-Completion rate
-
-Upcoming deadlines
-
-Study time
-
-Today's focus
-
-Recent academic activity
-
-The goal is to make important academic information visible without forcing students to navigate through multiple screens.
-
-8. 🔐 Authentication & User Data
-
-StudyFlow supports authenticated user workflows.
-
-User-specific academic data is stored separately so that each account can access its own:
-
-Tasks
-
-Study plans
-
-Study sessions
-
-Quizzes
-
-Profile information
-
-Supabase authentication and PostgreSQL persistence are used as the foundation for the data layer.
-
-📴 Offline-First Experience
-
-StudyFlow is designed with offline usability in mind for core productivity workflows.
-
-Offline capabilities
-
-Local application shell caching
-
-Local task/data access
-
-Persistent synchronization queue
-
-Offline mutation tracking
-
-Automatic synchronization after reconnection
-
-Manual sync controls
-
-Offline-friendly productivity workflows
-
-The application separates features that require the internet from features that can continue working locally.
-
-Online / Offline flow
-
-                    STUDYFLOW AI
-                         │
-             ┌───────────┴───────────┐
-             │                       │
-          ONLINE                   OFFLINE
-             │                       │
-      Supabase + Gemini        Local application data
-             │                       │
-      Cloud persistence        Persistent sync queue
-             │                       │
-             └───────────┬───────────┘
-                         │
-                   Reconnection
-                         │
-                         ▼
-                 Queue synchronization
-
-AI generation requires an internet connection because Gemini requests are performed through the backend.
-
-💾 Backup & Restore
-
-StudyFlow includes local backup functionality for supported academic data.
-
-Export
-
-Users can export application data into a JSON backup file.
-
-Restore
-
-A previously exported JSON backup can be imported to restore supported local data.
-
-Example:
-
+Track study activity and build a clearer picture of where your time goes.
+
+Study sessions can contribute to:
+
+- Total study time
+- Productivity insights
+- Dashboard statistics
+- Progress tracking
+
+---
+
+# 📴 Offline-First Architecture
+
+StudyFlow is designed so core productivity workflows can continue to work even when connectivity is unavailable.
+
+```mermaid
+flowchart TD
+    A[Student] --> B{Internet Available?}
+
+    B -->|Yes| C[Online Mode]
+    B -->|No| D[Offline Mode]
+
+    C --> E[Local Application]
+    E --> F[Supabase]
+    E --> G[Gemini AI]
+
+    D --> H[Local Storage]
+    H --> I[Persistent Sync Queue]
+
+    I --> J{Connection Restored?}
+    J -->|Yes| K[Replay Pending Changes]
+    K --> F
+
+    J -->|No| I
+```
+
+### Offline capabilities
+
+- Cached application shell
+- Local data access
+- Persistent synchronization queue
+- Offline mutation tracking
+- Reconnection synchronization
+- Manual sync controls
+- Offline-friendly productivity workflows
+
+> AI generation requires an internet connection because requests are processed through the backend and Gemini API.
+
+---
+
+# ☁️ Cloud Synchronization
+
+StudyFlow follows a local-first → cloud-sync approach for supported data workflows.
+
+```text
+                 USER ACTION
+                      │
+                      ▼
+               Local Application
+                      │
+             ┌────────┴────────┐
+             │                 │
+          ONLINE             OFFLINE
+             │                 │
+             ▼                 ▼
+        Supabase         Sync Queue
+             │                 │
+             │          Connection Restored
+             │                 │
+             └────────┬────────┘
+                      ▼
+                Cloud Storage
+```
+
+This allows the application to provide a responsive local experience while retaining cloud persistence when connectivity is available.
+
+---
+
+# 💾 Backup & Restore
+
+StudyFlow provides local JSON backup functionality for supported academic data.
+
+### Export
+
+```text
+StudyFlow Data
+      │
+      ▼
+JSON Backup
+      │
+      ▼
+Your Device
+```
+
+### Restore
+
+```text
+JSON Backup
+      │
+      ▼
+Import
+      │
+      ▼
 StudyFlow
-   │
-   ├── Tasks
-   ├── Study Plans
-   ├── Study Sessions
-   └── Quizzes
-          │
-          ▼
-      JSON Backup
+      │
+      ▼
+Restored Data
+```
 
-Backups are intended to give users an additional way to preserve their academic data.
+Backups are intended as an additional way for users to preserve their academic data.
 
-📱 PWA / Mobile Experience
+---
 
-StudyFlow is designed to provide an app-like experience on supported mobile browsers.
+# 🏗️ System Architecture
 
-Depending on browser/platform support, users can add the application to their device's home screen.
+```mermaid
+flowchart TB
 
-Mobile experience
+    U[👤 Student]
 
-Responsive interface
+    subgraph CLIENT["Frontend"]
+        UI[React + TypeScript + Vite]
+        PWA[PWA / Offline Layer]
+        LOCAL[Local Storage]
+    end
 
-Touch-friendly controls
+    subgraph SERVER["Backend"]
+        API[Node.js + Express]
+        AUTH[Authentication]
+        VALIDATE[Zod Validation]
+        AI[AI Service Layer]
+    end
 
-Mobile navigation
+    subgraph CLOUD["Cloud Services"]
+        DB[(Supabase PostgreSQL)]
+        GEMINI[Google Gemini API]
+    end
 
-Installable web-app experience
+    U --> UI
+    UI --> PWA
+    PWA --> LOCAL
 
-Standalone-style application experience
+    UI --> API
+    API --> AUTH
+    API --> VALIDATE
+    API --> AI
 
-Offline application shell
+    AUTH --> DB
+    VALIDATE --> DB
+    AI --> GEMINI
 
-🎨 UI / UX
+    LOCAL -. Sync .-> DB
+```
 
-StudyFlow follows an Apple-inspired dark interface focused on clarity and low visual clutter.
+---
 
-Design principles
+# 🔄 Complete Product Flow
 
-Minimal visual hierarchy
+```mermaid
+flowchart LR
 
-Dark interface
+    A[Create Account]
+    B[Set Academic Goals]
+    C[Create Tasks]
+    D[Generate Study Plan]
+    E[Break Down Tasks]
+    F[Study]
+    G[Generate Quiz]
+    H[Track Study Session]
+    I[Review Progress]
+    J[Adjust Plan]
 
-Glass-inspired surfaces
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
+    J --> C
+```
 
-Rounded components
+### In simple terms:
 
-Subtle borders
+**Plan → Organize → Study → Practice → Track → Improve**
 
-Consistent spacing
+---
 
-Responsive layouts
+# 🧱 Project Architecture
 
-Micro-interactions
-
-Smooth transitions
-
-Clear typography
-
-Accessible interaction states
-
-The interface is designed to keep academic information readable while still providing a polished modern product experience.
-
-🏗️ System Architecture
-
-┌──────────────────────────────────────────────────────────────┐
-│                         STUDYFLOW AI                          │
-└──────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-                    ┌───────────────────┐
-                    │ React + TypeScript│
-                    │      Frontend     │
-                    └─────────┬─────────┘
-                              │
-                         REST API / Auth
-                              │
-                              ▼
-                    ┌───────────────────┐
-                    │ Express + Node.js │
-                    │     Backend       │
-                    └─────────┬─────────┘
-                              │
-                 ┌────────────┴────────────┐
-                 │                         │
-                 ▼                         ▼
-        ┌─────────────────┐       ┌─────────────────┐
-        │ Supabase        │       │ Google Gemini   │
-        │ PostgreSQL/Auth │       │ AI Services    │
-        └─────────────────┘       └─────────────────┘
-
-🗂️ Project Structure
-
+```text
 StudyFlow/
 │
-├── api/
-│   └── ...
+├── 📁 api/
+│   └── Vercel API entrypoints
 │
-├── backend/
+├── 📁 backend/
 │   ├── src/
 │   │   ├── routes/
 │   │   ├── services/
@@ -390,7 +492,7 @@ StudyFlow/
 │   ├── package.json
 │   └── tsconfig.json
 │
-├── frontend/
+├── 📁 frontend/
 │   ├── public/
 │   │   ├── icons/
 │   │   └── ...
@@ -403,143 +505,171 @@ StudyFlow/
 │   ├── package.json
 │   └── vite.config.*
 │
-├── .agents/
+├── 📁 docs/
+│   └── screenshots/
+│
+├── 📁 .agents/
 │   └── rules/
 │
-├── package.json
-├── package-lock.json
-├── supabase-schema.sql
-├── tsconfig.json
-├── vercel.json
-└── README.md
+├── 📄 package.json
+├── 📄 package-lock.json
+├── 📄 supabase-schema.sql
+├── 📄 tsconfig.json
+├── 📄 vercel.json
+└── 📄 README.md
+```
 
-The exact internal file structure may evolve as the project develops.
+---
 
-🛠️ Tech Stack
+# 🛠️ Technology Stack
 
-Layer
+<div align="center">
 
-Technology
+| Layer | Technology |
+|---|---|
+| 🎨 Frontend | React 18 |
+| 🧠 Language | TypeScript |
+| ⚡ Build Tool | Vite |
+| 🧭 Routing | React Router |
+| 🎯 Icons | Lucide |
+| 📊 Charts | Recharts |
+| 🔔 Notifications | React Hot Toast |
+| 🖥️ Backend | Node.js + Express |
+| 🛡️ Validation | Zod |
+| 🗄️ Database | Supabase PostgreSQL |
+| 🔐 Authentication | Supabase Auth / JWT |
+| 🤖 AI | Google Gemini API |
+| 📱 Offline | Service Worker + Local Storage |
+| ☁️ Deployment | Vercel |
+| 🐙 Version Control | Git + GitHub |
 
-Frontend
+</div>
 
-React 18
+---
 
-Language
+# 🔐 Security
 
-TypeScript
+StudyFlow follows a server-side architecture for sensitive AI credentials and uses database-level access controls.
 
-Build Tool
+### 🔑 API Key Protection
 
-Vite
+The Gemini API key is kept on the backend and should never be exposed in frontend code.
 
-Routing
+### 🛡️ Supabase Row Level Security
 
-React Router
+Supabase RLS policies can restrict users to authorized database records.
 
-UI Icons
+### ✅ Request Validation
 
-Lucide
+Backend requests are validated using Zod where applicable.
 
-Charts
+### 🔐 Authentication
 
-Recharts
+User authentication is handled through Supabase Auth and JWT-based sessions.
 
-Notifications
+### 🚫 Secret Management
 
-React Hot Toast
+Never commit:
 
-Styling
+```text
+.env
+.env.local
+SUPABASE_SERVICE_ROLE_KEY
+GEMINI_API_KEY
+```
 
-Custom CSS / responsive design
+Production secrets should be configured through the deployment platform's environment variables.
 
-Backend
+---
 
-Node.js + Express
+# 🔌 API Overview
 
-Backend Language
+Representative API endpoints include:
 
-TypeScript
+```text
+GET    /api/health
 
-Validation
+POST   /api/auth/login
 
-Zod
+GET    /api/tasks
+POST   /api/tasks
+PATCH  /api/tasks/:id
+DELETE /api/tasks/:id
 
-Database
+GET    /api/study-sessions
+GET    /api/study-plans
+GET    /api/quizzes
 
-Supabase PostgreSQL
+POST   /api/ai/recommendation
+POST   /api/ai/copilot
+POST   /api/ai/quiz
+POST   /api/ai/study-plan
+POST   /api/ai/task-breakdown
+```
 
-Authentication
+The exact request and response contracts are defined in the backend implementation.
 
-Supabase Auth / JWT
+---
 
-AI
+# 🚀 Getting Started
 
-Google Gemini API
-
-Offline
-
-Service Worker + local storage/sync mechanisms
-
-Deployment
-
-Vercel
-
-Repository
-
-GitHub
-
-🚀 Getting Started
-
-Prerequisites
+## Prerequisites
 
 Make sure you have:
 
-Node.js 18+
+- Node.js 18+
+- npm
+- Git
+- Supabase project
+- Google Gemini API key
 
-npm
+---
 
-A Supabase project
+## 1. Clone
 
-A Google Gemini API key
-
-Git
-
-1. Clone the repository
-
+```bash
 git clone https://github.com/shreyash-bhosale/StudyFlow.git
 cd StudyFlow
+```
 
-2. Install dependencies
+---
 
-Install root dependencies:
+## 2. Install Dependencies
 
+### Root
+
+```bash
 npm install
+```
 
-Install backend dependencies:
+### Backend
 
+```bash
 cd backend
 npm install
+```
 
-Install frontend dependencies:
+### Frontend
 
+```bash
 cd ../frontend
 npm install
-
-Return to the project root:
-
 cd ..
+```
 
-🔐 Environment Variables
+---
 
-Backend
+# 🔐 Environment Variables
+
+## Backend
 
 Create:
 
+```text
 backend/.env
+```
 
-Example:
-
+```env
 PORT=3001
 NODE_ENV=development
 
@@ -550,390 +680,337 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 GEMINI_API_KEY=your-gemini-api-key
 
 FRONTEND_URL=http://localhost:5173
+```
 
-Frontend
+## Frontend
 
 Create:
 
+```text
 frontend/.env
+```
 
-Example:
-
+```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_API_URL=http://localhost:3001
+```
 
-⚠️ Never commit secrets
+---
 
-Do not commit:
+# 🗄️ Database Setup
 
-.env
-.env.local
-SUPABASE_SERVICE_ROLE_KEY
-GEMINI_API_KEY
+1. Create a Supabase project.
+2. Open **Supabase Dashboard → SQL Editor**.
+3. Open:
 
-The Supabase service-role key and Gemini API key must remain server-side.
-
-🗄️ Database Setup
-
-Create a Supabase project.
-
-Open Supabase Dashboard → SQL Editor.
-
-Open:
-
+```text
 supabase-schema.sql
+```
 
-Copy the SQL into the Supabase SQL Editor.
+4. Copy the SQL into the SQL Editor.
+5. Execute the schema.
+6. Verify the required tables and RLS policies.
 
-Execute the script.
+Core entities include:
 
-Verify that the required tables and policies have been created.
-
-The project uses tables for core academic entities such as:
-
+```text
 profiles
 tasks
 study_plans
 study_sessions
 quizzes
+```
 
-Database policies should be reviewed before using the application with production data.
+---
 
-💻 Run Locally
+# 💻 Run Locally
 
 From the project root:
 
+```bash
 npm run dev
+```
 
-If the root project is configured to run both applications concurrently, this starts the frontend and backend together.
+Or run the applications independently:
 
-You can also run them separately.
+### Backend
 
-Backend
-
+```bash
 npm run dev:backend
+```
 
-Typical development API:
+Default development API:
 
+```text
 http://localhost:3001
+```
 
-Frontend
+### Frontend
 
+```bash
 npm run dev:frontend
+```
 
-Typical development frontend:
+Default development frontend:
 
+```text
 http://localhost:5173
+```
 
-🧪 Testing & Validation
+---
 
-Before deployment, validate both frontend and backend.
+# 🧪 Testing Checklist
 
-Frontend build
+Before deploying a new version, verify:
 
-cd frontend
-npm run build
-
-Backend build
-
-cd backend
-npm run build
-
-Recommended validation checklist
-
-[ ] Authentication
-[ ] Login
-[ ] Logout
-[ ] Task creation
-[ ] Task editing
-[ ] Task completion
-[ ] Task deletion
-[ ] Deadlines
-[ ] Study planner
-[ ] AI Copilot
-[ ] Quiz generation
-[ ] AI task breakdown
-[ ] Study sessions
-[ ] Progress dashboard
-[ ] Offline workflows
-[ ] Reconnection sync
-[ ] Backup export
-[ ] Backup restore
-[ ] Mobile layout
-[ ] Production environment variables
-[ ] Production deployment
-
-☁️ Production Deployment
-
-StudyFlow is deployed using Vercel.
-
-Production application:
-
-https://studyflowve.vercel.app
-
-The repository contains a Vercel configuration:
-
-vercel.json
-
-The deployment architecture separates the frontend and backend while routing API requests through the production application.
-
-                   studyflowve.vercel.app
-                            │
-              ┌─────────────┴─────────────┐
-              │                           │
-           Frontend                    /api/*
-              │                           │
-              ▼                           ▼
-           Vite UI                    Express API
-                                          │
-                              ┌───────────┴───────────┐
-                              ▼                       ▼
-                          Supabase                 Gemini
-
-Production environment variables
-
-Configure production secrets in the Vercel project settings instead of committing them to Git.
-
-Required values include the Supabase and Gemini configuration used by the backend and frontend.
-
-🔒 Security
-
-StudyFlow uses multiple layers of application security.
-
-API key protection
-
-Sensitive server-side credentials are stored in environment variables.
-
-The Gemini API key should never be exposed in frontend code.
-
-Supabase RLS
-
-Row Level Security can restrict database access so authenticated users only access permitted records.
-
-Input validation
-
-Backend requests are validated using Zod where applicable.
-
+```text
 Authentication
+├── Sign up
+├── Login
+├── Logout
+└── Session persistence
 
-User authentication is handled through Supabase Auth and JWT-based sessions.
+Tasks
+├── Create
+├── Read
+├── Update
+├── Complete
+└── Delete
 
-Environment security
+AI
+├── AI Copilot
+├── Quiz Generation
+├── Study Plan Generation
+├── Task Breakdown
+└── Recommendations
 
-Secrets should be managed through:
-
-Local development → .env
-Production → Vercel Environment Variables
-
-Never commit production credentials to GitHub.
-
-🔌 API Overview
-
-StudyFlow exposes backend endpoints for authentication, academic data, AI workflows, and study tracking.
-
-Representative endpoint groups include:
-
-/api/health
-
-/api/auth/*
-
-/api/tasks
-
-/api/study-sessions
-
-/api/study-plans
-
-/api/quizzes
-
-/api/ai/recommendation
-
-/api/ai/copilot
-
-/api/ai/quiz
-
-/api/ai/study-plan
-
-/api/ai/task-breakdown
-
-The exact request and response contracts are implemented in the backend source.
-
-🧠 AI Architecture
-
-AI requests follow a server-side flow:
-
-User
- │
- ▼
-React Frontend
- │
- ▼
-Express API
- │
- ▼
-Request validation
- │
- ▼
-Gemini API
- │
- ▼
-Structured response
- │
- ▼
-Frontend UI
-
-This approach keeps the Gemini credential away from the browser and gives the backend control over request validation and response handling.
-
-📊 Product Flow
-
-A typical student workflow looks like:
-
-Create Account
-      ↓
-Set Academic Goals
-      ↓
-Create Tasks / Deadlines
-      ↓
-Generate Study Plan
-      ↓
-Break Large Tasks into Steps
-      ↓
 Study
-      ↓
-Generate Practice Quiz
-      ↓
-Track Study Sessions
-      ↓
-Review Progress
-      ↓
-Adjust Study Plan
+├── Study Sessions
+├── Progress
+└── Study Time
 
-🎯 Why StudyFlow?
+Offline
+├── Offline launch
+├── Local data
+├── Queue mutations
+└── Reconnection sync
 
-Students often use several disconnected tools:
+Production
+├── Environment variables
+├── API routing
+├── Frontend build
+├── Backend build
+└── Production deployment
+```
 
-Notes        → one application
-Tasks        → another application
-Calendar     → another application
-AI assistant → another application
-Quizzes      → another application
-Progress     → spreadsheets
+---
 
-StudyFlow attempts to bring these workflows into one student-focused system.
+# ☁️ Deployment
 
-The core product idea is:
+StudyFlow AI is deployed on **Vercel**.
 
-Turn academic goals into organized actions, use AI when useful, and make progress visible.
+### Production
 
-🧪 Example Use Case
+**https://studyflowve.vercel.app**
 
-Imagine a student has an exam in 14 days.
+### Architecture
 
-Instead of manually creating a schedule:
+```text
+                  studyflowve.vercel.app
+                           │
+              ┌────────────┴────────────┐
+              │                         │
+              ▼                         ▼
+        React Frontend              /api/*
+              │                         │
+              │                         ▼
+              │                   Express API
+              │                         │
+              │              ┌──────────┴──────────┐
+              │              ▼                     ▼
+              │         Supabase                  Gemini
+              │         PostgreSQL                 AI
+              │
+              └──────── User Interface
+```
 
+Deployment configuration is maintained in:
+
+```text
+vercel.json
+```
+
+---
+
+# 📱 Mobile / PWA
+
+StudyFlow is designed to provide a mobile-friendly application experience.
+
+On supported browsers:
+
+1. Open [StudyFlow AI](https://studyflowve.vercel.app).
+2. Open the browser menu.
+3. Select **Add to Home Screen** or **Install App** when available.
+4. Launch StudyFlow from your device.
+
+PWA installation behavior depends on browser and operating-system support.
+
+---
+
+# 🗺️ Roadmap
+
+### 📚 Academic Intelligence
+
+- [ ] Smarter personalized recommendations
+- [ ] Spaced repetition
+- [ ] Revision recommendations
+- [ ] Adaptive study plans
+
+### 📊 Analytics
+
+- [ ] Advanced study analytics
+- [ ] Weekly productivity reports
+- [ ] Subject-level performance
+- [ ] Long-term progress trends
+
+### 🔔 Productivity
+
+- [ ] Push notifications
+- [ ] Recurring tasks
+- [ ] Calendar integration
+- [ ] Exam countdowns
+- [ ] Smart reminders
+
+### 🧠 AI
+
+- [ ] More quiz formats
+- [ ] AI revision mode
+- [ ] AI-generated flashcards
+- [ ] Personalized learning paths
+
+---
+
+# 🎯 Product Philosophy
+
+StudyFlow isn't designed to simply give students another place to write down tasks.
+
+The goal is to connect the entire academic workflow:
+
+```text
+             GOAL
+              │
+              ▼
+           PLAN
+              │
+              ▼
+          ORGANIZE
+              │
+              ▼
+            STUDY
+              │
+              ▼
+           PRACTICE
+              │
+              ▼
+           MEASURE
+              │
+              ▼
+           IMPROVE
+              │
+              └──────────────► REPEAT
+```
+
+### The idea is simple:
+
+> **Turn academic goals into actionable work, use AI where it adds value, and make progress visible.**
+
+---
+
+# 🧪 Example
+
+Imagine an exam is 14 days away.
+
+Instead of manually figuring out everything:
+
+```text
 Exam
- │
  ├── Mathematics
  ├── Physics
  └── Computer Science
+```
 
-The student can provide the academic requirements to StudyFlow.
+StudyFlow can transform the academic requirements into a structured workflow:
 
-The AI planner can then produce:
+```text
+Day 01
+├── Mathematics → Algebra
+└── Physics → Mechanics
 
-Day 1
- ├── Mathematics → Algebra revision
- └── Physics → Mechanics concepts
+Day 02
+├── Mathematics → Practice
+└── Computer Science → Data Structures
 
-Day 2
- ├── Mathematics → Practice problems
- └── Computer Science → Data structures
-
-Day 3
- ├── Physics → Numerical practice
- └── Computer Science → Revision
+Day 03
+├── Physics → Numericals
+└── Computer Science → Revision
 
 ...
 
 Day 14
- └── Final revision + practice quiz
+├── Final Revision
+└── Practice Quiz
+```
 
-The resulting plan can then be connected to the student's task workflow.
+The student can then track the work directly inside StudyFlow.
 
-📱 Mobile Installation
+---
 
-On supported mobile browsers:
+# 📸 More Screenshots
 
-Open StudyFlow AI.
+### 📋 Task Management
 
-Open the browser menu.
+<p align="center">
+  <img src="docs/screenshots/tasks-web.png" alt="Screenshot of StudyFlow AI task management interface." width="90%">
+</p>
 
-Select Add to Home Screen or Install App when available.
+---
 
-Launch StudyFlow from the device home screen.
+### 🤖 AI Copilot
 
-Availability of PWA installation features depends on the browser and operating system.
+<p align="center">
+  <img src="docs/screenshots/ai-copilot-web.png" alt="Screenshot of the StudyFlow AI academic Copilot interface." width="90%">
+</p>
 
-🖼️ Screenshots
+---
 
-Add project screenshots here as the UI evolves.
+### 🧠 Quiz Generator
 
-Recommended screenshots:
+<p align="center">
+  <img src="docs/screenshots/quiz-generator-web.png" alt="Screenshot of the StudyFlow AI quiz generator interface." width="90%">
+</p>
 
-docs/
-├── dashboard.png
-├── tasks.png
-├── ai-copilot.png
-├── quiz-generator.png
-├── study-planner.png
-└── progress.png
+---
 
-Example:
+### 📅 Study Planner
 
-![StudyFlow Dashboard](docs/dashboard.png)
+<p align="center">
+  <img src="docs/screenshots/study-planner-web.png" alt="Screenshot of the StudyFlow AI study planner interface." width="90%">
+</p>
 
-🗺️ Roadmap
+---
 
-Potential future improvements include:
+# 🤝 Contributing
 
-More advanced AI personalization
+Contributions, ideas, improvements and bug reports are welcome.
 
-Calendar integrations
-
-Smarter revision recommendations
-
-Spaced-repetition workflows
-
-More detailed analytics
-
-Improved offline synchronization
-
-Push notifications
-
-Recurring tasks
-
-Academic goal tracking
-
-More quiz formats
-
-Exportable progress reports
-
-Improved mobile experience
-
-The roadmap may change based on user feedback and development priorities.
-
-🤝 Contributing
-
-Contributions, ideas, and bug reports are welcome.
-
-Basic workflow
-
+```bash
 # Fork the repository
 
 # Clone your fork
-git clone https://github.com/your-username/StudyFlow.git
+git clone https://github.com/YOUR_USERNAME/StudyFlow.git
 
-# Create a branch
+# Create a feature branch
 git checkout -b feature/your-feature
 
 # Make your changes
@@ -944,49 +1021,68 @@ git commit -m "feat: add your feature"
 
 # Push
 git push origin feature/your-feature
+```
 
-Then open a pull request.
+Then open a Pull Request.
 
-🐛 Reporting Issues
+---
+
+# 🐛 Bug Reports
 
 When reporting an issue, include:
 
-What you were trying to do
+- What you were trying to do
+- Expected behavior
+- Actual behavior
+- Browser/device
+- Steps to reproduce
+- Console/server errors
+- Screenshots when useful
 
-What you expected
+---
 
-What actually happened
+# 📄 License
 
-Browser/device
+This project is licensed under the **MIT License**.
 
-Console or server error
+See [`LICENSE`](./LICENSE) for details.
 
-Steps to reproduce
+---
 
-Screenshots when useful
+# 👨‍💻 Built By
 
-This makes debugging significantly easier.
+<div align="center">
 
-📄 License
+### Shreyash Bhosale
 
-This project is licensed under the MIT License.
+Building at the intersection of **AI, software engineering and student productivity.**
 
-See LICENSE for details.
+<br>
 
-👨‍💻 Author
+<a href="https://github.com/shreyash-bhosale">
+  <img src="https://img.shields.io/badge/GitHub-shreyash--bhosale-181717?style=for-the-badge&logo=github" alt="GitHub">
+</a>
 
-Shreyash Bhosale
+<br><br>
 
-GitHub: @shreyash-bhosale
+**StudyFlow AI**
 
-Project: StudyFlow AI
+[🚀 Live Demo](https://studyflowve.vercel.app) · [💻 GitHub Repository](https://github.com/shreyash-bhosale/StudyFlow)
 
-Live Demo: studyflowve.vercel.app
+</div>
 
-<p align="center">
-  Built with React, TypeScript, Node.js, Supabase, Google Gemini, and a lot of debugging. 🚀
-</p>
+---
 
-<p align="center">
-  <strong>Study smarter. Build better habits. Go beyond average.</strong> 🎓
-</p>
+<div align="center">
+
+## 🎓 Study smarter. Build better habits. Go beyond average.
+
+<br>
+
+⭐ **If you find StudyFlow interesting, consider giving the repository a star.**
+
+<br>
+
+Made with ❤️, React, TypeScript, Supabase, Node.js & Gemini AI.
+
+</div>
