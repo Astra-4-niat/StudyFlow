@@ -10,7 +10,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName: string, securityQuestion?: string, securityAnswer?: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -99,20 +99,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, securityQuestion?: string, securityAnswer?: string) => {
     try {
       // 1. Try backend endpoint to create user with email_confirm: true via Supabase Admin
       await api.post('/api/auth/signup', {
         fullName,
         email,
         password,
+        securityQuestion,
+        securityAnswer,
       });
     } catch {
       // Fallback: direct Supabase signUp
+      const userMeta: Record<string, any> = { full_name: fullName };
+      if (securityQuestion && securityAnswer) {
+        userMeta.security_question = securityQuestion.trim();
+        userMeta.security_answer = securityAnswer.trim().toLowerCase();
+      }
       const { error: directError } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: fullName } },
+        options: { data: userMeta },
       });
       if (directError) {
         throw new Error(directError.message || 'Unable to create account. Please try again.');

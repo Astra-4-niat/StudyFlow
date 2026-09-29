@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { User, Lock, Save, Loader, BookOpen } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Lock, Save, Loader, BookOpen, ShieldCheck, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import api from '../lib/api';
+import { SECURITY_QUESTIONS } from './SignUp';
 import toast from 'react-hot-toast';
 
 const Settings: React.FC = () => {
@@ -10,6 +12,45 @@ const Settings: React.FC = () => {
   const [savingProfile, setSavingProfile] = useState(false);
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
   const [savingPassword, setSavingPassword] = useState(false);
+
+  // Security question state
+  const [currentSq, setCurrentSq] = useState('');
+  const [selectedSq, setSelectedSq] = useState(SECURITY_QUESTIONS[0]);
+  const [sqAnswer, setSqAnswer] = useState('');
+  const [savingSq, setSavingSq] = useState(false);
+
+  useEffect(() => {
+    api.get('/api/auth/my-security-question')
+      .then(res => {
+        if (res.data?.question) {
+          setCurrentSq(res.data.question);
+          setSelectedSq(res.data.question);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSaveSecurityQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sqAnswer.trim()) {
+      toast.error('Please enter a secret answer');
+      return;
+    }
+    setSavingSq(true);
+    try {
+      await api.post('/api/auth/set-security-question', {
+        question: selectedSq,
+        answer: sqAnswer.trim(),
+      });
+      setCurrentSq(selectedSq);
+      setSqAnswer('');
+      toast.success('Security question updated successfully!');
+    } catch (err: any) {
+      toast.error(err?.data?.error || err.message || 'Failed to update security question');
+    } finally {
+      setSavingSq(false);
+    }
+  };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +143,80 @@ const Settings: React.FC = () => {
             </div>
             <button type="submit" className="btn btn-secondary" style={{ alignSelf: 'flex-start' }} disabled={savingPassword}>
               {savingPassword ? <><Loader size={15} className="spin" />Changing...</> : <><Lock size={15} />Change Password</>}
+            </button>
+          </form>
+        </div>
+
+        {/* Security Question & Account Recovery */}
+        <div className="card" style={{ marginTop: 'var(--space-5)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+            <div style={{ width: 40, height: 40, background: 'rgba(56, 189, 248, 0.1)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldCheck size={20} style={{ color: 'var(--accent)' }} />
+            </div>
+            <div>
+              <h2 className="section-title">Account Recovery & Security Question</h2>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                Allows you to reset your password instantly if email delivery is unavailable
+              </p>
+            </div>
+          </div>
+
+          {currentSq && (
+            <div style={{
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '10px 14px',
+              marginBottom: 'var(--space-4)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 13,
+            }}>
+              <CheckCircle size={16} style={{ color: 'var(--success)', flexShrink: 0 }} />
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Current Question: </span>
+                <strong style={{ color: 'var(--text-primary)' }}>{currentSq}</strong>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveSecurityQuestion} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <div className="form-group">
+              <label className="form-label">Security Question</label>
+              <select
+                className="form-input"
+                value={selectedSq}
+                onChange={e => setSelectedSq(e.target.value)}
+              >
+                {SECURITY_QUESTIONS.map(q => (
+                  <option key={q} value={q}>{q}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Security Answer</label>
+              <input
+                className="form-input"
+                type="text"
+                placeholder="Enter your secret answer"
+                value={sqAnswer}
+                onChange={e => setSqAnswer(e.target.value)}
+                required
+              />
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                Answers are case-insensitive.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary"
+              style={{ alignSelf: 'flex-start' }}
+              disabled={savingSq || !sqAnswer.trim()}
+            >
+              {savingSq ? <><Loader size={15} className="spin" />Saving...</> : <><Save size={15} />Save Security Question</>}
             </button>
           </form>
         </div>
