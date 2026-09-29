@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Lock, Save, Loader, BookOpen, ShieldCheck, CheckCircle } from 'lucide-react';
+import { User, Lock, Save, Loader, BookOpen, ShieldCheck, CheckCircle, Smartphone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import api from '../lib/api';
@@ -256,6 +256,42 @@ const Settings: React.FC = () => {
                 <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Recommended interval for Pomodoro sessions</p>
               </div>
               <span className="badge" style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>45 minutes</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile & Android App Card */}
+        <div className="card" style={{ marginBottom: 'var(--space-5)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+            <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(99, 102, 241, 0.2))', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Smartphone size={20} style={{ color: 'var(--accent)' }} />
+            </div>
+            <div>
+              <h2 className="section-title">Android & Mobile App</h2>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Install StudyFlow AI on your phone as a native app</p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-3) 0', borderBottom: '1px solid var(--border-subtle)' }}>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>App Status</p>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Progressive Web App (WebAPK) & offline shell</p>
+              </div>
+              <span className="badge badge-completed">
+                <CheckCircle size={12} style={{ display: 'inline', marginRight: 4 }} /> Ready to Install
+              </span>
+            </div>
+
+            <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 'var(--space-4)', marginTop: 'var(--space-2)' }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+                How to install on Android:
+              </p>
+              <ol style={{ fontSize: 13, color: 'var(--text-secondary)', paddingLeft: 18, lineHeight: 1.6, margin: 0 }}>
+                <li>Open <strong>studyflowve.vercel.app</strong> in Chrome on your Android phone.</li>
+                <li>Tap the <strong>"Install StudyFlow AI App"</strong> banner at the bottom (or tap the <strong>⋮</strong> menu at top right and choose <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>).</li>
+                <li>StudyFlow AI will be minted directly as an Android app with its own launcher icon, full-screen view, and offline caching.</li>
+              </ol>
             </div>
           </div>
         </div>

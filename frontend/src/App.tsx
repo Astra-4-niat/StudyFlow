@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppLayout } from './components/layout/AppLayout';
+import { InstallPrompt } from './components/common/InstallPrompt';
 
 // Route-based code-splitting: loads each page chunk on demand for ultra-fast initial load
 const Landing = lazy(() => import('./pages/Landing').then(m => ({ default: m.Landing })));
@@ -75,6 +76,7 @@ function App() {
           }}
         />
         <AppRoutes />
+        <InstallPrompt />
       </AuthProvider>
     </BrowserRouter>
   );
