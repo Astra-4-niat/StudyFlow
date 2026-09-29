@@ -1,226 +1,176 @@
-# StudyFlow AI 🎓
+# StudyFlow AI 🎓✨
 
-> **An AI-powered academic command center** — Plan smarter, learn better, achieve more.
+<p align="center">
+  <img src="frontend/public/icons/studyflow-logo.png" alt="StudyFlow AI Logo" width="100" height="100" style="border-radius: 22px; box-shadow: 0 8px 30px rgba(56, 189, 248, 0.3);" />
+</p>
 
-StudyFlow AI is a full-stack web application that helps students manage tasks, generate personalized study plans with Google Gemini AI, take AI-generated quizzes, and track academic progress.
+<p align="center">
+  <strong>An Apple-Inspired Academic Command Center with Offline-First Architecture & Cloud Sync.</strong><br>
+  Plan smarter, revise faster, track progress, and learn without limits — online or completely offline.
+</p>
+
+<p align="center">
+  <a href="https://studyflowve.vercel.app"><img src="https://img.shields.io/badge/Live%20Demo-studyflowve.vercel.app-00f2fe?style=for-the-badge&logo=vercel" alt="Live Demo"></a>
+  <img src="https://img.shields.io/badge/PWA-Android%20%26%20iOS%20Ready-success?style=for-the-badge&logo=android" alt="PWA Ready">
+  <img src="https://img.shields.io/badge/Offline-100%25%20Functional-blueviolet?style=for-the-badge&logo=buffer" alt="Offline Ready">
+  <img src="https://img.shields.io/badge/AI-Google%20Gemini%201.5-blue?style=for-the-badge&logo=google" alt="Google Gemini AI">
+  <img src="https://img.shields.io/badge/Database-Supabase%20Postgres-3ECF8E?style=for-the-badge&logo=supabase" alt="Supabase">
+</p>
 
 ---
 
-## ✨ Features
+## 🌟 Highlights & Capabilities
 
-| Feature | Description |
-|---------|-------------|
-| **Task Management** | Full CRUD — create, edit, complete, delete tasks with priorities & deadlines |
-| **AI Study Planner** | Gemini AI generates day-by-day study plans from your goal and exam date |
-| **AI Copilot** | Chat with a context-aware AI assistant that knows your tasks |
-| **Quiz Generator** | AI-generated multiple-choice quizzes on any topic with scoring |
-| **AI Task Breakdown** | Break any task into actionable steps with Gemini AI |
-| **Progress Tracking** | Charts for study time, task completion, and subject distribution |
-| **Study Sessions** | Log study sessions tracked against real Supabase data |
-| **Authentication** | Supabase Auth — signup, login, logout, password change |
-| **Row Level Security** | Each user can only access their own data |
+### ⚡ 1. 100% Offline-First Architecture & Zero-Latency Local Storage
+* **Runs in Airplane Mode:** Uses service worker precaching (`studyflow-offline-v2`) to load the application shell, pages, styles, and assets with 0 network dependencies.
+* **Instant Device Storage:** All tasks, study sessions, study plans, and quizzes are stored locally in the device's storage for instant **0ms load times**.
+* **Automatic Cloud Sync Queue:** Any modifications made offline (task creates, updates, deletes, study sessions) are safely enqueued in a persistent queue (`studyflow_sync_queue`).
+* **Auto-Replay on Reconnection:** The moment your phone or computer reconnects to the internet (`window.online`), queued mutations replay seamlessly to Supabase in the background.
+* **Sync Status Indicator:** Real-time UI indicator showing Synced (🟢), Offline Mode with pending mutation count (🟡), and Syncing live animation (🔵) with a one-click **"Sync Now"** trigger.
+
+### 💾 2. Local Backup & Instant Restore (.json)
+* **One-Click Export:** Download a complete, unencrypted JSON backup of all your tasks, study logs, quizzes, and schedules directly to your device.
+* **Offline Restore:** Import and restore backup files at any time, even without an internet connection or backend access.
+
+### 🧠 3. Google Gemini 1.5 Academic Intelligence
+* **AI Study Planner:** Transforms your exam dates, available daily hours, and subject goals into realistic, day-by-day milestone schedules.
+* **AI Copilot:** Context-aware academic conversational assistant with knowledge of your active deadlines and courses.
+* **Quiz Generator:** Generates 5–10 interactive multiple-choice questions with instant scoring and explanations for any subject or topic.
+* **AI Task Breakdown:** Splits intimidating assignments into step-by-step actionable micro-tasks.
+* **Graceful Offline Safeguards:** Normal productivity features remain completely unblocked offline, while AI features gracefully notify the user that AI generation requires an internet connection.
+
+### 📱 4. Installable Android & Mobile Web App (PWA / WebAPK)
+* **Installable Native App Feel:** Add to Home Screen on Android and iOS with dedicated launcher icon, full-screen standalone mode, and bottom navigation bar.
+* **No App Store Friction:** Install directly from Google Chrome or Safari via the built-in install banner.
+
+### 🛡️ 5. Zero-Email Dependency Security & Password Recovery
+* **Dual Password Recovery:** Reset your password via email link OR instantly through your personal **Security Question & Answer**, ensuring you never get locked out even if email delivery is delayed.
 
 ---
 
 ## 🛠 Tech Stack
 
-### Frontend
-- **React 18** + **TypeScript** + **Vite**
-- **React Router DOM** for routing
-- **Recharts** for data visualization
-- **Lucide React** for icons
-- **React Hot Toast** for notifications
-- **Supabase JS** for auth
-
-### Backend
-- **Node.js** + **Express.js** + **TypeScript**
-- **Google Generative AI SDK** (@google/generative-ai)
-- **Supabase Admin Client** for secure DB access
-- **Zod** for input validation
-- **Helmet** + **CORS** + **Rate Limiting** for security
-
-### Database & Auth
-- **Supabase PostgreSQL** (fully managed)
-- **Supabase Auth** (JWT-based)
-- **Row Level Security** on all tables
+| Layer | Technologies |
+|---|---|
+| **Frontend** | React 18, TypeScript, Vite, React Router DOM, Lucide Icons, Recharts, React Hot Toast |
+| **Styling** | Apple-inspired minimal dark UI/UX system, Custom responsive CSS variables, Glassmorphism, Micro-animations |
+| **Offline & Storage** | Service Workers (PWA Cache Storage), Persistent Sync Queue, Local Device Storage, Blob File I/O |
+| **Backend** | Node.js, Express.js, TypeScript, Zod Schema Validation, Vercel Serverless Function (`/api`) |
+| **AI Integration** | Google Generative AI (`@google/generative-ai`), Gemini 1.5 Flash |
+| **Database & Auth** | Supabase PostgreSQL, Row Level Security (RLS), Supabase Auth (JWT) |
+| **Deployment** | Vercel (Frontend & Serverless API), GitHub CI/CD |
 
 ---
 
-## 🏗 Architecture
+## 🏛 Architecture Overview
 
 ```
-Browser (React)
-    │
-    ├── Supabase Auth (JWT)
-    │
-    └── Express Backend (Node.js)
-             │
-             ├── Supabase PostgreSQL (via service role key)
-             └── Google Gemini API (secure, server-side only)
+                                  STUDYFLOW AI
+                                       │
+                ┌──────────────────────┴──────────────────────┐
+                ▼                                             ▼
+        [ONLINE MODE]                                 [OFFLINE MODE]
+                │                                             │
+      Fast Local Read/Write                         Instant Local Storage (0ms)
+                │                                             │
+      Real-Time Cloud Sync                         Persistent Mutation Sync Queue
+                │                                             │
+      Gemini 1.5 AI Endpoints                       Local Precached PWA Shell
+                │                                             │
+       Supabase PostgreSQL                        Background Sync on Reconnect ──┐
+                ▲                                                                 │
+                └────────────────────────── Replays Queue ────────────────────────┘
 ```
-
-**Security**: The Gemini API key is **never** sent to the browser. All AI calls happen server-side.
 
 ---
 
-## 🗄 Database Schema
+## 🚀 Quick Start Guide
 
-```sql
-profiles     — user profile info
-tasks        — academic tasks with priority/deadline/status
-study_plans  — AI-generated study plans (JSONB)
-study_sessions — tracked study time by subject
-quizzes      — AI quiz questions and scores (JSONB)
+### Prerequisites
+* [Node.js](https://nodejs.org/) (v18 or higher)
+* [Supabase Account & Project](https://supabase.com)
+* [Google AI Studio API Key](https://aistudio.google.com/app/apikey)
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/shreyash-bhosale/StudyFlow.git
+cd StudyFlow
 ```
 
-See [`supabase-schema.sql`](./supabase-schema.sql) for the complete schema with RLS policies.
+### 2. Install Dependencies
+```bash
+# Install root, backend, and frontend packages
+npm install
+cd backend && npm install
+cd ../frontend && npm install
+cd ..
+```
 
----
+### 3. Setup Environment Variables
 
-## ⚙️ Environment Variables
-
-### Backend (`backend/.env`)
+#### Backend (`backend/.env`):
 ```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key    # For admin DB access
-GEMINI_API_KEY=your-gemini-api-key                  # NEVER expose to frontend
 PORT=3001
 NODE_ENV=development
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+GEMINI_API_KEY=your-google-gemini-api-key
 FRONTEND_URL=http://localhost:5173
 ```
 
-### Frontend (`frontend/.env`)
+#### Frontend (`frontend/.env`):
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_API_URL=http://localhost:3001
 ```
 
----
+### 4. Database Setup
+1. Go to your Supabase Project Dashboard → **SQL Editor**.
+2. Run the SQL script located in [`supabase-schema.sql`](./supabase-schema.sql).
+3. Tables created:
+   * `profiles` (with security question & answer recovery fields)
+   * `tasks` (priorities, subjects, deadlines, completion)
+   * `study_plans` (AI-generated schedules)
+   * `study_sessions` (Pomodoro and revision logs)
+   * `quizzes` (questions, answers, scores)
 
-## 🚀 Local Development
-
-### Prerequisites
-- Node.js 18+
-- A Supabase project
-- A Google Gemini API key
-
-### Step 1: Clone & Install
+### 5. Run Locally
 ```bash
-git clone <repo-url>
-cd studyflow-ai
-npm install          # installs root devDependencies (concurrently)
-cd backend && npm install
-cd ../frontend && npm install
-```
-
-### Step 2: Configure Environment
-```bash
-# Copy example files
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-
-# Fill in your actual credentials
-```
-
-### Step 3: Set up Supabase
-1. Go to [supabase.com](https://supabase.com) and create a project
-2. Open the **SQL Editor**
-3. Run the contents of [`supabase-schema.sql`](./supabase-schema.sql)
-4. Copy your **Project URL** and **anon key** from Settings → API
-
-### Step 4: Get Gemini API Key
-1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Create a new API key
-3. Add it to `backend/.env` as `GEMINI_API_KEY`
-
-### Step 5: Run
-```bash
-# From project root - runs both frontend and backend
+# Run both frontend & backend concurrently from root:
 npm run dev
 
-# Or run separately:
-npm run dev:backend   # Backend on :3001
-npm run dev:frontend  # Frontend on :5173
+# Or run individually:
+npm run dev:backend   # API on http://localhost:3001
+npm run dev:frontend  # UI on http://localhost:5173
 ```
 
 ---
 
-## ☁️ Replit Deployment
+## 📱 Installing on Android / iOS
 
-1. **Fork/upload** this project to Replit
-2. Add all environment variables in **Replit Secrets**:
-   - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-   - `GEMINI_API_KEY`
-   - `FRONTEND_URL` = your Replit app URL
-   - `NODE_ENV=production`
-3. Set `VITE_API_URL` to your backend Replit URL
-4. Build: `npm run build`
-5. Start: `npm run start`
-
-For SPA routing to work in production, configure your server to serve `index.html` for all unmatched routes (already handled in the Express server).
+1. Open **[studyflowve.vercel.app](https://studyflowve.vercel.app)** in Google Chrome on your phone.
+2. Tap the **"Install StudyFlow AI App"** banner at the bottom (or tap Chrome's `⋮` menu → **"Install app"** or **"Add to Home screen"**).
+3. The app will be installed to your device launcher as a native WebAPK with full offline launch capabilities.
 
 ---
 
-## 🔒 Security
+## 🔒 Security & Privacy
 
-- ✅ Gemini API key never sent to browser
-- ✅ All AI requests go through authenticated backend endpoints
-- ✅ Supabase Row Level Security — users can only access their own data
-- ✅ Server-side JWT verification (not frontend filtering)
-- ✅ Input validation with Zod on all endpoints
-- ✅ Rate limiting on AI endpoints (20 req/15min)
-- ✅ Helmet for security headers
-- ✅ CORS configured for specific origins only
+* 🛡️ **Zero API Key Leakage:** The Google Gemini API key is strictly stored server-side in environment variables and never bundled or transmitted to client devices.
+* 🔐 **Row-Level Security (RLS):** Supabase RLS policies enforce that users can only read and write their own rows.
+* 🛡️ **Zod Validation:** All API endpoints validate request structures before processing.
+* 🛡️ **Local Privacy:** Backup files (`.json`) are downloaded directly into device memory via local blobs without passing through intermediate analytics or servers.
 
 ---
 
-## 📁 Project Structure
+## 📄 License
 
-```
-studyflow-ai/
-├── backend/
-│   ├── src/
-│   │   ├── index.ts          # Express server
-│   │   ├── lib/supabase.ts   # Supabase admin client
-│   │   ├── middleware/
-│   │   │   ├── auth.ts       # JWT verification
-│   │   │   └── errorHandler.ts
-│   │   └── routes/
-│   │       ├── tasks.ts      # Task CRUD
-│   │       ├── studyPlans.ts
-│   │       ├── studySessions.ts
-│   │       ├── quizzes.ts
-│   │       └── ai.ts         # All Gemini AI routes
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── pages/            # All page components
-│   │   ├── components/       # Reusable components
-│   │   ├── contexts/         # Auth context
-│   │   ├── lib/              # Supabase & API clients
-│   │   ├── types/            # TypeScript interfaces
-│   │   └── utils/            # Helper functions
-│   └── package.json
-├── supabase-schema.sql       # Run this in Supabase SQL Editor
-├── package.json              # Root scripts
-└── README.md
-```
+This project is licensed under the [MIT License](./LICENSE).
 
 ---
 
-## 🔮 Future Improvements
-
-- [ ] Dark/light mode toggle
-- [ ] AI-powered task prioritization notifications
-- [ ] Calendar view for deadlines
-- [ ] Export study plans as PDF
-- [ ] Collaboration features
-- [ ] Mobile native app (React Native)
-- [ ] Pomodoro timer integration
-- [ ] Google Calendar sync
-
----
-
-*Built with ❤️ using React, Node.js, Supabase, and Google Gemini AI*
+<p align="center">
+  Designed & Engineered with ❤️ for ambitious students worldwide.
+</p>
