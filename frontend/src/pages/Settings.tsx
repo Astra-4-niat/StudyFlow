@@ -1,23 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import { User, Lock, Save, Loader, BookOpen, ShieldCheck, CheckCircle, Smartphone } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, Lock, Save, Loader, BookOpen, ShieldCheck, CheckCircle, Smartphone, Database, Download, Upload } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import api from '../lib/api';
 import { SECURITY_QUESTIONS } from './SignUp';
 import toast from 'react-hot-toast';
+import { storage } from '../lib/storage';
 
 const Settings: React.FC = () => {
-  const { profile, refreshProfile } = useAuth();
+  const { profile, refreshProfile, user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(profile?.full_name || '');
   const [savingProfile, setSavingProfile] = useState(false);
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
   const [savingPassword, setSavingPassword] = useState(false);
+
+  // Local storage stats
+  const [storageStats, setStorageStats] = useState(() => storage.getStorageStats(user?.id));
 
   // Security question state
   const [currentSq, setCurrentSq] = useState('');
   const [selectedSq, setSelectedSq] = useState(SECURITY_QUESTIONS[0]);
   const [sqAnswer, setSqAnswer] = useState('');
   const [savingSq, setSavingSq] = useState(false);
+
+  const handleExportData = () => {
+    const jsonStr = storage.exportAllData(user?.id);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `studyflow_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Backup downloaded to device!');
+  };
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content && storage.importAllData(content, user?.id)) {
+        toast.success('Data imported successfully!');
+        setStorageStats(storage.getStorageStats(user?.id));
+        setTimeout(() => window.location.reload(), 600);
+      } else {
+        toast.error('Invalid backup file');
+      }
+    };
+    reader.readAsText(file);
+  };
 
   useEffect(() => {
     api.get('/api/auth/my-security-question')
@@ -293,6 +327,65 @@ const Settings: React.FC = () => {
                 <li>StudyFlow AI will be minted directly as an Android app with its own launcher icon, full-screen view, and offline caching.</li>
               </ol>
             </div>
+          </div>
+        </div>
+
+        {/* Device Storage & Data Backup Card */}
+        <div className="card" style={{ marginBottom: 'var(--space-5)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+            <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(56, 189, 248, 0.2))', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Database size={20} style={{ color: 'var(--accent)' }} />
+            </div>
+            <div>
+              <h2 className="section-title">Device Storage & Offline Speed</h2>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Tasks and study records are saved directly in phone/device storage for instant 0ms loads</p>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+            <div style={{ background: 'var(--bg-elevated)', padding: '12px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+              <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', display: 'block' }}>{storageStats.taskCount}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Tasks Saved</span>
+            </div>
+            <div style={{ background: 'var(--bg-elevated)', padding: '12px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+              <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', display: 'block' }}>{storageStats.planCount}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Study Plans</span>
+            </div>
+            <div style={{ background: 'var(--bg-elevated)', padding: '12px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+              <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', display: 'block' }}>{storageStats.sessionCount}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Study Sessions</span>
+            </div>
+            <div style={{ background: 'var(--bg-elevated)', padding: '12px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+              <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', display: 'block' }}>{storageStats.quizCount}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Quizzes</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--border-subtle)' }}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={handleExportData}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <Download size={14} /> Download Backup (.json)
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => fileInputRef.current?.click()}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <Upload size={14} /> Restore from Backup
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              accept=".json"
+              onChange={handleImportFile}
+            />
           </div>
         </div>
 

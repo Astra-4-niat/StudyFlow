@@ -5,39 +5,47 @@ import api from '../lib/api';
 import { Task, TaskBreakdown } from '../types';
 import { formatDate, formatDeadline, formatMinutes, isOverdue } from '../utils/helpers';
 import toast from 'react-hot-toast';
+import { storage } from '../lib/storage';
+import { useAuth } from '../contexts/AuthContext';
 
 const TaskDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [task, setTask] = useState<Task | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const [task, setTask] = useState<Task | null>(() => id ? storage.getTaskById(id, user?.id) : null);
+  const [loading] = useState(false);
   const [breakdown, setBreakdown] = useState<TaskBreakdown | null>(null);
   const [breakdownLoading, setBreakdownLoading] = useState(false);
 
   useEffect(() => {
     fetchTask();
-  }, [id]);
+  }, [id, user?.id]);
 
   const fetchTask = async () => {
+    if (!id) return;
+    const local = storage.getTaskById(id, user?.id);
+    if (local) {
+      setTask(local);
+    }
     try {
       const res = await api.get(`/api/tasks/${id}`);
-      setTask(res.data);
+      if (res.data) setTask(res.data);
     } catch {
-      toast.error('Task not found');
-      navigate('/tasks');
-    } finally {
-      setLoading(false);
+      if (!local) {
+        toast.error('Task not found');
+        navigate('/tasks');
+      }
     }
   };
 
-  const handleComplete = async () => {
+  const handleComplete = () => {
     if (!task) return;
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';
-    try {
-      const res = await api.put(`/api/tasks/${task.id}`, { status: newStatus });
-      setTask(res.data);
+    const updated = storage.updateTask(task.id, { status: newStatus }, user?.id);
+    if (updated) {
+      setTask(updated);
       if (newStatus === 'completed') toast.success('Task completed! 🎉');
-    } catch { toast.error('Failed to update task'); }
+    }
   };
 
   const handleBreakdown = async () => {

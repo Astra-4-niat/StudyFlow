@@ -5,6 +5,8 @@ import api from '../lib/api';
 import { StudyPlan, AIStudyPlan, StudyDay } from '../types';
 import { formatDate, formatMinutes } from '../utils/helpers';
 import toast from 'react-hot-toast';
+import { storage } from '../lib/storage';
+import { useAuth } from '../contexts/AuthContext';
 
 interface PlanForm {
   goal: string;
@@ -16,25 +18,32 @@ interface PlanForm {
 }
 
 const StudyPlanner: React.FC = () => {
+  const { user } = useAuth();
   const [form, setForm] = useState<PlanForm>({
     goal: '', subjects: '', examDate: '', hoursPerDay: '2', sessionDuration: '45', difficulty: 'intermediate',
   });
   const [generating, setGenerating] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<AIStudyPlan | null>(null);
-  const [savedPlans, setSavedPlans] = useState<StudyPlan[]>([]);
+  const [savedPlans, setSavedPlans] = useState<StudyPlan[]>(() => storage.getStudyPlans(user?.id));
   const [expandedDay, setExpandedDay] = useState<number | null>(0);
   const [addingTasks, setAddingTasks] = useState(false);
   const [addedTasks, setAddedTasks] = useState(false);
   const [addedDays, setAddedDays] = useState<Record<number, boolean>>({});
 
-  useEffect(() => { fetchPlans(); }, []);
+  useEffect(() => {
+    fetchPlans();
+  }, [user?.id]);
 
   const fetchPlans = async () => {
+    const local = storage.getStudyPlans(user?.id);
+    setSavedPlans(local);
     try {
       const res = await api.get('/api/study-plans');
-      setSavedPlans(Array.isArray(res.data) ? res.data : []);
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        setSavedPlans(res.data);
+      }
     } catch {
-      // Non-blocking: initial fetch of saved plans
+      // Local plans remain accessible offline
     }
   };
 
@@ -57,14 +66,22 @@ const StudyPlanner: React.FC = () => {
         sessionDuration: parseInt(form.sessionDuration),
         difficulty: form.difficulty,
       });
-      setCurrentPlan(res.data.plan);
+      const generatedPlan = res.data.plan;
+      setCurrentPlan(generatedPlan);
       setExpandedDay(0);
-      if (res.data.saved) {
-        setSavedPlans(prev => [res.data.saved, ...prev]);
-        toast.success('Study plan generated and saved!');
-      } else {
-        toast.success('Study plan generated!');
-      }
+
+      // Save locally to device storage immediately
+      const savedLocal = storage.saveStudyPlan({
+        title: generatedPlan.title || `${form.subjects} Preparation Plan`,
+        description: generatedPlan.summary || form.goal,
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: form.examDate,
+        total_minutes: generatedPlan.totalMinutes || (generatedPlan.totalDays || 7) * parseFloat(form.hoursPerDay) * 60,
+        plan_data: generatedPlan,
+      }, user?.id);
+
+      setSavedPlans(prev => [savedLocal, ...prev]);
+      toast.success('Study plan generated and saved to device!');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate study plan');
     } finally {
@@ -140,19 +157,15 @@ const StudyPlanner: React.FC = () => {
         return;
       }
 
-      try {
-        await api.post('/api/tasks/batch', { tasks: tasksToCreate });
-      } catch {
-        // Fallback for direct per-item creation
-        await Promise.all(tasksToCreate.map(t => api.post('/api/tasks', t)));
-      }
+      // 1. Immediately store on device (0ms)
+      storage.saveBatchTasks(tasksToCreate, user?.id);
 
       setAddedTasks(true);
       toast.success(`🎉 Added ${tasksToCreate.length} tasks to your Tasks section!`, {
         duration: 4000,
       });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to add plan to tasks');
+    } catch {
+      toast.error('Failed to add plan to tasks');
     } finally {
       setAddingTasks(false);
     }
@@ -195,16 +208,13 @@ const StudyPlanner: React.FC = () => {
         return;
       }
 
-      try {
-        await api.post('/api/tasks/batch', { tasks: dayTasks });
-      } catch {
-        await Promise.all(dayTasks.map(t => api.post('/api/tasks', t)));
-      }
+      // 1. Save on device instantly (0ms)
+      storage.saveBatchTasks(dayTasks, user?.id);
 
       setAddedDays(prev => ({ ...prev, [day.dayNumber]: true }));
       toast.success(`Added ${dayTasks.length} tasks for Day ${day.dayNumber}`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to add tasks for this day');
+    } catch {
+      toast.error('Failed to add tasks for this day');
     }
   };
 

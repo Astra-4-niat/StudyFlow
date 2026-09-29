@@ -10,6 +10,8 @@ import { formatDeadline, getTaskTypeIcon, isOverdue } from '../utils/helpers';
 import toast from 'react-hot-toast';
 import { Modal } from '../components/Modal';
 import { DateTimePicker } from '../components/DateTimePicker';
+import { storage } from '../lib/storage';
+import { useAuth } from '../contexts/AuthContext';
 
 type FilterStatus = 'all' | 'pending' | 'in_progress' | 'completed' | 'high';
 type ViewMode = 'calendar' | 'list';
@@ -63,8 +65,9 @@ const formatSelectedDateTitle = (dateKey: string): string => {
 
 const Tasks: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const [tasks, setTasks] = useState<Task[]>(() => storage.getTasks(user?.id));
+  const [loading] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
@@ -86,7 +89,7 @@ const Tasks: React.FC = () => {
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     if (searchParams.get('create') === 'true') {
@@ -96,14 +99,30 @@ const Tasks: React.FC = () => {
   }, [searchParams]);
 
   const fetchTasks = async () => {
-    setLoading(true);
+    // 1. Immediately display local phone storage (0ms)
+    const local = storage.getTasks(user?.id);
+    setTasks(local);
+
+    // 2. Silent background sync to get any cloud-created tasks without blocking UI
     try {
       const res = await api.get('/api/tasks');
-      setTasks(Array.isArray(res.data) ? res.data : []);
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        const localMap = new Map(local.map(t => [t.id, t]));
+        let hasNew = false;
+        res.data.forEach((serverTask: Task) => {
+          if (!localMap.has(serverTask.id)) {
+            localMap.set(serverTask.id, serverTask);
+            hasNew = true;
+          }
+        });
+        if (hasNew) {
+          const merged = Array.from(localMap.values());
+          setTasks(merged);
+          localStorage.setItem(`studyflow_tasks_${user?.id || 'guest'}`, JSON.stringify(merged));
+        }
+      }
     } catch {
-      toast.error('Failed to load tasks');
-    } finally {
-      setLoading(false);
+      // Local storage continues running smoothly offline
     }
   };
 
@@ -149,44 +168,40 @@ const Tasks: React.FC = () => {
         estimated_minutes: form.estimated_minutes ? parseInt(form.estimated_minutes) : null,
       };
       if (editTask) {
-        const res = await api.put(`/api/tasks/${editTask.id}`, payload);
-        setTasks(prev => prev.map(t => t.id === editTask.id ? res.data : t));
+        const updated = storage.updateTask(editTask.id, payload, user?.id);
+        if (updated) {
+          setTasks(prev => prev.map(t => t.id === editTask.id ? updated : t));
+        }
         toast.success('Task updated');
       } else {
-        const res = await api.post('/api/tasks', payload);
-        setTasks(prev => [res.data, ...prev]);
+        const created = storage.saveTask(payload, user?.id);
+        setTasks(prev => [created, ...prev]);
         toast.success('Task created');
       }
       setShowModal(false);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save task');
+    } catch {
+      toast.error('Failed to save task');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleComplete = async (task: Task, e: React.MouseEvent) => {
+  const handleComplete = (task: Task, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';
-    try {
-      const res = await api.put(`/api/tasks/${task.id}`, { status: newStatus });
-      setTasks(prev => prev.map(t => t.id === task.id ? res.data : t));
+    const updated = storage.updateTask(task.id, { status: newStatus }, user?.id);
+    if (updated) {
+      setTasks(prev => prev.map(t => t.id === task.id ? updated : t));
       if (newStatus === 'completed') toast.success('Task completed! 🎉');
-    } catch {
-      toast.error('Failed to update task');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await api.delete(`/api/tasks/${id}`);
-      setTasks(prev => prev.filter(t => t.id !== id));
-      setDeleteConfirm(null);
-      toast.success('Task deleted');
-    } catch {
-      toast.error('Failed to delete task');
-    }
+  const handleDelete = (id: string) => {
+    storage.deleteTask(id, user?.id);
+    setTasks(prev => prev.filter(t => t.id !== id));
+    setDeleteConfirm(null);
+    toast.success('Task deleted');
   };
 
   const update = (k: keyof TaskFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>

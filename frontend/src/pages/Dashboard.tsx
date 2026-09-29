@@ -9,6 +9,7 @@ import api from '../lib/api';
 import { Task } from '../types';
 import { formatDeadline } from '../utils/helpers';
 import toast from 'react-hot-toast';
+import { storage } from '../lib/storage';
 
 interface Stats {
   total: number;
@@ -18,12 +19,21 @@ interface Stats {
 }
 
 const Dashboard: React.FC = () => {
-  const { profile } = useAuth();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [stats, setStats] = useState<Stats>({ total: 0, completed: 0, pending: 0, studyMinutes: 0 });
+  const { profile, user } = useAuth();
+  const initialLocalTasks = storage.getTasks(user?.id);
+  const initialLocalSessions = storage.getStudySessions(user?.id);
+  const initialStudyMinutes = initialLocalSessions.reduce((sum, s) => sum + (s.duration_minutes || 0), 0);
+
+  const [tasks, setTasks] = useState<Task[]>(initialLocalTasks);
+  const [stats, setStats] = useState<Stats>({
+    total: initialLocalTasks.length,
+    completed: initialLocalTasks.filter(t => t.status === 'completed').length,
+    pending: initialLocalTasks.filter(t => t.status !== 'completed').length,
+    studyMinutes: initialStudyMinutes,
+  });
   const [recommendation, setRecommendation] = useState('');
   const [recLoading, setRecLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading] = useState(false);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -31,29 +41,51 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user?.id]);
 
   const fetchData = async () => {
-    setLoading(true);
+    // 1. Instantly pull local storage data (0ms)
+    const localTasks = storage.getTasks(user?.id);
+    const localSessions = storage.getStudySessions(user?.id);
+    const totalMinutes = localSessions.reduce((sum, s) => sum + (s.duration_minutes || 0), 0);
+    setTasks(localTasks);
+    setStats({
+      total: localTasks.length,
+      completed: localTasks.filter(t => t.status === 'completed').length,
+      pending: localTasks.filter(t => t.status !== 'completed').length,
+      studyMinutes: totalMinutes,
+    });
+
+    // 2. Silent background sync
     try {
-      const [tasksRes, sessionsRes] = await Promise.all([
+      const [tasksRes] = await Promise.all([
         api.get('/api/tasks'),
-        api.get('/api/study-sessions'),
+        api.get('/api/study-sessions').catch(() => null),
       ]);
-      const allTasks: Task[] = Array.isArray(tasksRes.data) ? tasksRes.data : [];
-      setTasks(allTasks);
-      const allSessions: { duration_minutes?: number }[] = Array.isArray(sessionsRes.data) ? sessionsRes.data : [];
-      const totalMinutes = allSessions.reduce((sum: number, s: { duration_minutes?: number }) => sum + (s.duration_minutes || 0), 0);
-      setStats({
-        total: allTasks.length,
-        completed: allTasks.filter(t => t.status === 'completed').length,
-        pending: allTasks.filter(t => t.status !== 'completed').length,
-        studyMinutes: totalMinutes,
-      });
-    } catch (err) {
-      console.error('Dashboard fetch error:', err);
-    } finally {
-      setLoading(false);
+      const serverTasks: Task[] = Array.isArray(tasksRes.data) ? tasksRes.data : [];
+      if (serverTasks.length > 0) {
+        const localMap = new Map(localTasks.map(t => [t.id, t]));
+        let hasNew = false;
+        serverTasks.forEach(st => {
+          if (!localMap.has(st.id)) {
+            localMap.set(st.id, st);
+            hasNew = true;
+          }
+        });
+        if (hasNew) {
+          const merged = Array.from(localMap.values());
+          setTasks(merged);
+          localStorage.setItem(`studyflow_tasks_${user?.id || 'guest'}`, JSON.stringify(merged));
+          setStats(prev => ({
+            ...prev,
+            total: merged.length,
+            completed: merged.filter(t => t.status === 'completed').length,
+            pending: merged.filter(t => t.status !== 'completed').length,
+          }));
+        }
+      }
+    } catch {
+      // Local storage continues cleanly offline
     }
   };
 
@@ -70,24 +102,22 @@ const Dashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!loading) fetchRecommendation();
-  }, [loading]);
+    fetchRecommendation();
+  }, []);
 
-  const handleTaskToggle = async (task: Task, e: React.MouseEvent) => {
+  const handleTaskToggle = (task: Task, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';
-    try {
-      const res = await api.put(`/api/tasks/${task.id}`, { status: newStatus });
-      setTasks(prev => prev.map(t => t.id === task.id ? res.data : t));
+    const updated = storage.updateTask(task.id, { status: newStatus }, user?.id);
+    if (updated) {
+      setTasks(prev => prev.map(t => t.id === task.id ? updated : t));
       if (newStatus === 'completed') toast.success('Task completed! 🎉');
       setStats(prev => ({
         ...prev,
         completed: newStatus === 'completed' ? prev.completed + 1 : prev.completed - 1,
         pending: newStatus === 'completed' ? prev.pending - 1 : prev.pending + 1,
       }));
-    } catch {
-      toast.error('Failed to update task');
     }
   };
 

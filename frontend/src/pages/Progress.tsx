@@ -6,14 +6,17 @@ import { Task, StudySession, Quiz } from '../types';
 import { formatDate, formatMinutes } from '../utils/helpers';
 import toast from 'react-hot-toast';
 import { Modal } from '../components/Modal';
+import { storage } from '../lib/storage';
+import { useAuth } from '../contexts/AuthContext';
 
 const COLORS = ['#6c63ff', '#a855f7', '#3b82f6', '#22c55e', '#f59e0b', '#ef4444'];
 
 const Progress: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [sessions, setSessions] = useState<StudySession[]>([]);
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const [tasks, setTasks] = useState<Task[]>(() => storage.getTasks(user?.id));
+  const [sessions, setSessions] = useState<StudySession[]>(() => storage.getStudySessions(user?.id));
+  const [quizzes, setQuizzes] = useState<Quiz[]>(() => storage.getQuizzes(user?.id));
+  const [loading] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [sessionForm, setSessionForm] = useState({ subject: '', duration_minutes: '30', task_id: '' });
   const [savingSession, setSavingSession] = useState(false);
@@ -21,35 +24,47 @@ const Progress: React.FC = () => {
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
-    setLoading(true);
+    // 1. Immediately display local phone storage (0ms)
+    const localTasks = storage.getTasks(user?.id);
+    const localSessions = storage.getStudySessions(user?.id);
+    const localQuizzes = storage.getQuizzes(user?.id);
+    setTasks(localTasks);
+    setSessions(localSessions);
+    setQuizzes(localQuizzes);
+
+    // 2. Silent background sync
     try {
       const [tasksRes, sessionsRes, quizzesRes] = await Promise.all([
         api.get('/api/tasks'),
         api.get('/api/study-sessions'),
         api.get('/api/quizzes'),
       ]);
-      setTasks(Array.isArray(tasksRes.data) ? tasksRes.data : []);
-      setSessions(Array.isArray(sessionsRes.data) ? sessionsRes.data : []);
-      setQuizzes(Array.isArray(quizzesRes.data) ? quizzesRes.data : []);
-    } catch { toast.error('Failed to load progress data'); }
-    finally { setLoading(false); }
+      if (Array.isArray(tasksRes.data) && tasksRes.data.length > 0) setTasks(tasksRes.data);
+      if (Array.isArray(sessionsRes.data) && sessionsRes.data.length > 0) setSessions(sessionsRes.data);
+      if (Array.isArray(quizzesRes.data) && quizzesRes.data.length > 0) setQuizzes(quizzesRes.data);
+    } catch {
+      // Local progress is always preserved offline
+    }
   };
 
-  const handleSaveSession = async (e: React.FormEvent) => {
+  const handleSaveSession = (e: React.FormEvent) => {
     e.preventDefault();
     setSavingSession(true);
     try {
-      const res = await api.post('/api/study-sessions', {
-        subject: sessionForm.subject,
-        duration_minutes: parseInt(sessionForm.duration_minutes),
+      const newSession = storage.saveStudySession({
+        subject: sessionForm.subject || 'General Study',
+        duration_minutes: parseInt(sessionForm.duration_minutes) || 30,
         task_id: sessionForm.task_id || null,
-      });
-      setSessions(prev => [res.data, ...prev]);
+      }, user?.id);
+      setSessions(prev => [newSession, ...prev]);
       setShowSessionModal(false);
       setSessionForm({ subject: '', duration_minutes: '30', task_id: '' });
-      toast.success('Study session recorded!');
-    } catch { toast.error('Failed to save session'); }
-    finally { setSavingSession(false); }
+      toast.success('Study session recorded on device!');
+    } catch {
+      toast.error('Failed to save session');
+    } finally {
+      setSavingSession(false);
+    }
   };
 
   // Compute stats

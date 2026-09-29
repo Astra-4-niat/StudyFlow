@@ -5,6 +5,7 @@ import { ChatMessage } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { MarkdownRenderer } from '../components/MarkdownRenderer';
 import toast from 'react-hot-toast';
+import { storage } from '../lib/storage';
 
 const SUGGESTIONS = [
   'What is scheduled in my study plan?',
@@ -15,7 +16,7 @@ const SUGGESTIONS = [
 ];
 
 const AICopilot: React.FC = () => {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,14 @@ const AICopilot: React.FC = () => {
 
     try {
       const history = newMessages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
-      const res = await api.post('/api/ai/copilot', { message: text.trim(), history });
+      const localTasks = storage.getTasks(user?.id);
+      const localPlans = storage.getStudyPlans(user?.id);
+      const res = await api.post('/api/ai/copilot', {
+        message: text.trim(),
+        history,
+        localTasks,
+        localPlans,
+      });
       const responseContent = res.data?.response;
       if (!responseContent || typeof responseContent !== 'string') {
         throw new Error('Received an invalid response from AI. Please try again.');

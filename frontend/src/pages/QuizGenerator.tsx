@@ -3,6 +3,8 @@ import { Brain, Sparkles, Check, X, Trophy, RotateCcw, Loader } from 'lucide-rea
 import api from '../lib/api';
 import { QuizQuestion } from '../types';
 import toast from 'react-hot-toast';
+import { storage } from '../lib/storage';
+import { useAuth } from '../contexts/AuthContext';
 
 interface QuizState {
   questions: QuizQuestion[];
@@ -13,6 +15,7 @@ interface QuizState {
 }
 
 const QuizGenerator: React.FC = () => {
+  const { user } = useAuth();
   const [form, setForm] = useState({ topic: '', numQuestions: '5', difficulty: 'medium' });
   const [generating, setGenerating] = useState(false);
   const [quiz, setQuiz] = useState<QuizState | null>(null);
@@ -35,21 +38,15 @@ const QuizGenerator: React.FC = () => {
         throw new Error('No quiz questions were generated for this topic. Please try again.');
       }
 
-      // Attempt to save quiz to DB asynchronously
-      let quizId: string | undefined;
-      try {
-        const saveRes = await api.post('/api/quizzes', {
-          topic: form.topic,
-          difficulty: form.difficulty,
-          questions,
-          total_questions: questions.length,
-        });
-        quizId = saveRes.data?.id;
-      } catch (saveErr) {
-        console.warn('Quiz DB record creation deferred:', saveErr);
-      }
+      // 1. Immediately save quiz to local device storage (0ms)
+      const savedQuiz = storage.saveQuiz({
+        topic: form.topic,
+        difficulty: form.difficulty as any,
+        questions,
+        total_questions: questions.length,
+      }, user?.id);
 
-      setQuiz({ questions, answers: {}, submitted: false, score: 0, quizId });
+      setQuiz({ questions, answers: {}, submitted: false, score: 0, quizId: savedQuiz.id });
       toast.success('Quiz ready! Answer the questions below.');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate quiz');
@@ -76,13 +73,9 @@ const QuizGenerator: React.FC = () => {
       return sum + (userAns === correctAns ? 1 : 0);
     }, 0);
     
-    // Save score to DB
+    // Save score to local storage immediately
     if (quiz.quizId) {
-      try {
-        await api.patch(`/api/quizzes/${quiz.quizId}/score`, { score });
-      } catch {
-        // Non-blocking: failure to record quiz score to history
-      }
+      storage.updateQuizScore(quiz.quizId, score, user?.id);
     }
     setQuiz(prev => prev ? { ...prev, submitted: true, score } : null);
     setCurrentQ(0);

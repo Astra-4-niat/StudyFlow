@@ -283,29 +283,31 @@ router.post('/copilot', async (req: AuthenticatedRequest, res: Response) => {
 
     const studentName = profileResult.data?.full_name || 'Student';
 
-    // Format Tasks Context
-    const tasks = tasksResult.data || [];
-    const pendingTasks = tasks.filter(t => t.status !== 'completed');
-    const completedTasks = tasks.filter(t => t.status === 'completed');
+    // Format Tasks Context (prefer client-sent local tasks if provided)
+    const clientTasks = Array.isArray(req.body.localTasks) && req.body.localTasks.length > 0 ? req.body.localTasks : null;
+    const tasks = clientTasks || tasksResult.data || [];
+    const pendingTasks = tasks.filter((t: any) => t.status !== 'completed');
+    const completedTasks = tasks.filter((t: any) => t.status === 'completed');
 
     let taskContext = 'No tasks recorded yet.';
     if (tasks.length > 0) {
       const pendingStr = pendingTasks.length > 0
-        ? pendingTasks.map(t => `- [${t.priority.toUpperCase()}] "${t.title}" (Subject: ${t.subject}, Due: ${t.deadline ? new Date(t.deadline).toLocaleDateString() : 'No deadline'}, Est: ${t.estimated_minutes ? `${t.estimated_minutes}m` : 'N/A'})${t.description ? `\n    Description: ${t.description}` : ''}`).join('\n')
+        ? pendingTasks.map((t: any) => `- [${(t.priority || 'medium').toUpperCase()}] "${t.title}" (Subject: ${t.subject || 'General'}, Due: ${t.deadline ? new Date(t.deadline).toLocaleDateString() : 'No deadline'}, Est: ${t.estimated_minutes ? `${t.estimated_minutes}m` : 'N/A'})${t.description ? `\n    Description: ${t.description}` : ''}`).join('\n')
         : 'All tasks completed!';
 
       const completedStr = completedTasks.length > 0
-        ? completedTasks.slice(0, 5).map(t => `- ✓ "${t.title}" (${t.subject})`).join('\n')
+        ? completedTasks.slice(0, 5).map((t: any) => `- ✓ "${t.title}" (${t.subject})`).join('\n')
         : 'None yet';
 
       taskContext = `PENDING TASKS (${pendingTasks.length}):\n${pendingStr}\n\nRECENTLY COMPLETED TASKS (${completedTasks.length}):\n${completedStr}`;
     }
 
-    // Format AI Study Plans Context
-    const studyPlans = studyPlansResult.data || [];
+    // Format AI Study Plans Context (prefer client-sent local plans if provided)
+    const clientPlans = Array.isArray(req.body.localPlans) && req.body.localPlans.length > 0 ? req.body.localPlans : null;
+    const studyPlans = clientPlans || studyPlansResult.data || [];
     let plannerContext = 'No study plans generated yet.';
     if (studyPlans.length > 0) {
-      plannerContext = studyPlans.map((sp, idx) => {
+      plannerContext = studyPlans.map((sp: any, idx: number) => {
         const pd = sp.plan_data as any;
         const daysSummary = Array.isArray(pd?.days)
           ? pd.days.slice(0, 7).map((d: any) => {
