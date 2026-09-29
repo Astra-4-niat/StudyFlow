@@ -37,6 +37,17 @@ const AICopilot: React.FC = () => {
     setInput('');
     setLoading(true);
 
+    if (!storage.isOnline()) {
+      const offlineAiMsg: ChatMessage = {
+        role: 'model',
+        content: `📡 **Offline Mode Active**\n\nI need an active internet connection to generate new guidance with Gemini.\n\nHowever, all your **tasks**, **calendar deadlines**, and **study plans** are safely stored right on this device! Once you reconnect to the internet, ask me anything and I'll assist you immediately.`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, offlineAiMsg]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const history = newMessages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
       const localTasks = storage.getTasks(user?.id);

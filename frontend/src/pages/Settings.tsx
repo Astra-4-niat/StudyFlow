@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Lock, Save, Loader, BookOpen, ShieldCheck, CheckCircle, Smartphone, Database, Download, Upload } from 'lucide-react';
+import { User, Lock, Save, Loader, BookOpen, ShieldCheck, CheckCircle, Smartphone, Database, Download, Upload, RefreshCw, Cloud, CloudOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import api from '../lib/api';
@@ -15,8 +15,19 @@ const Settings: React.FC = () => {
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
   const [savingPassword, setSavingPassword] = useState(false);
 
-  // Local storage stats
+  // Local storage stats & sync status
   const [storageStats, setStorageStats] = useState(() => storage.getStorageStats(user?.id));
+  const [syncStatus, setSyncStatus] = useState(() => storage.getSyncStatus(user?.id));
+  const [manualSyncing, setManualSyncing] = useState(false);
+
+  useEffect(() => {
+    const handleSyncStatus = (e: CustomEvent) => {
+      setSyncStatus(e.detail);
+      setStorageStats(storage.getStorageStats(user?.id));
+    };
+    window.addEventListener('studyflow_sync_status', handleSyncStatus as EventListener);
+    return () => window.removeEventListener('studyflow_sync_status', handleSyncStatus as EventListener);
+  }, [user?.id]);
 
   // Security question state
   const [currentSq, setCurrentSq] = useState('');
@@ -51,6 +62,23 @@ const Settings: React.FC = () => {
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleManualSync = async () => {
+    if (!navigator.onLine) {
+      toast.error('Device is currently offline. Connect to internet to sync.');
+      return;
+    }
+    setManualSyncing(true);
+    try {
+      await storage.processSyncQueue(user?.id);
+      toast.success('All local changes synced with cloud! ☁️');
+      setStorageStats(storage.getStorageStats(user?.id));
+    } catch {
+      toast.error('Sync failed. Will retry automatically.');
+    } finally {
+      setManualSyncing(false);
+    }
   };
 
   useEffect(() => {
@@ -359,6 +387,53 @@ const Settings: React.FC = () => {
               <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', display: 'block' }}>{storageStats.quizCount}</span>
               <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Quizzes</span>
             </div>
+          </div>
+
+          {/* Sync status row */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '10px 14px',
+            marginBottom: 'var(--space-4)',
+            fontSize: 13
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {!syncStatus.isOnline ? (
+                <>
+                  <CloudOff size={16} style={{ color: 'var(--warning)' }} />
+                  <span style={{ color: 'var(--text-secondary)' }}>Offline Mode: mutations queued locally ({syncStatus.pendingQueueCount} pending)</span>
+                </>
+              ) : syncStatus.isSyncing || manualSyncing ? (
+                <>
+                  <RefreshCw size={16} className="spin" style={{ color: 'var(--accent)' }} />
+                  <span style={{ color: 'var(--accent)' }}>Syncing with cloud...</span>
+                </>
+              ) : syncStatus.pendingQueueCount > 0 ? (
+                <>
+                  <Cloud size={16} style={{ color: 'var(--accent)' }} />
+                  <span style={{ color: 'var(--text-primary)' }}>{syncStatus.pendingQueueCount} change(s) pending sync</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle size={16} style={{ color: 'var(--success)' }} />
+                  <span style={{ color: 'var(--text-secondary)' }}>All data is in sync with cloud</span>
+                </>
+              )}
+            </div>
+
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={manualSyncing || !syncStatus.isOnline}
+              onClick={handleManualSync}
+              style={{ fontSize: 12, padding: '4px 10px', height: 'auto' }}
+            >
+              {manualSyncing ? <><RefreshCw size={12} className="spin" /> Syncing</> : <><RefreshCw size={12} /> Sync Now</>}
+            </button>
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--border-subtle)' }}>

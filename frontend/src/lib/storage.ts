@@ -1,6 +1,20 @@
 import { Task, StudyPlan, StudySession, Quiz } from '../types';
 import api from './api';
 
+export interface SyncQueueItem {
+  id: string;
+  action: 'CREATE_TASK' | 'UPDATE_TASK' | 'DELETE_TASK' | 'BATCH_TASKS' | 'CREATE_SESSION' | 'CREATE_PLAN';
+  payload: any;
+  timestamp: number;
+}
+
+export interface SyncStatus {
+  isOnline: boolean;
+  pendingCount: number;
+  isSyncing: boolean;
+  lastSyncedAt: string | null;
+}
+
 // Helper to get storage keys scoped by user
 const getStorageKey = (prefix: string, userId?: string): string => {
   return userId ? `studyflow_${prefix}_${userId}` : `studyflow_${prefix}_guest`;
@@ -96,9 +110,116 @@ const createDefaultTasks = (userId: string = 'local'): Task[] => {
   ];
 };
 
+let isProcessingQueue = false;
+
 export const storage = {
   // ==========================================
-  // TASKS
+  // ONLINE & SYNC QUEUE MANAGEMENT
+  // ==========================================
+  isOnline(): boolean {
+    return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  },
+
+  getSyncQueue(userId?: string): SyncQueueItem[] {
+    const key = getStorageKey('sync_queue', userId);
+    return readStorage<SyncQueueItem[]>(key, []);
+  },
+
+  enqueueSync(item: Omit<SyncQueueItem, 'id' | 'timestamp'>, userId?: string): void {
+    const key = getStorageKey('sync_queue', userId);
+    const queue = this.getSyncQueue(userId);
+    const newItem: SyncQueueItem = {
+      ...item,
+      id: generateId(),
+      timestamp: Date.now(),
+    };
+    writeStorage(key, [...queue, newItem]);
+    this.notifySyncChange(userId);
+
+    // If online, trigger background drain
+    if (this.isOnline()) {
+      this.processSyncQueue(userId);
+    }
+  },
+
+  clearSyncQueue(userId?: string): void {
+    const key = getStorageKey('sync_queue', userId);
+    writeStorage(key, []);
+    this.notifySyncChange(userId);
+  },
+
+  async processSyncQueue(userId?: string): Promise<{ success: number; failed: number }> {
+    if (isProcessingQueue || !this.isOnline()) {
+      return { success: 0, failed: 0 };
+    }
+
+    const key = getStorageKey('sync_queue', userId);
+    const queue = this.getSyncQueue(userId);
+    if (queue.length === 0) return { success: 0, failed: 0 };
+
+    isProcessingQueue = true;
+    this.notifySyncChange(userId, true);
+
+    const remaining: SyncQueueItem[] = [];
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (const item of queue) {
+      try {
+        if (item.action === 'CREATE_TASK') {
+          await api.post('/api/tasks', item.payload);
+        } else if (item.action === 'UPDATE_TASK') {
+          await api.put(`/api/tasks/${item.payload.id}`, item.payload.updates);
+        } else if (item.action === 'DELETE_TASK') {
+          await api.delete(`/api/tasks/${item.payload.id}`);
+        } else if (item.action === 'BATCH_TASKS') {
+          await api.post('/api/tasks/batch', { tasks: item.payload }).catch(() => {
+            return Promise.all(item.payload.map((t: any) => api.post('/api/tasks', t)));
+          });
+        } else if (item.action === 'CREATE_SESSION') {
+          await api.post('/api/study-sessions', item.payload);
+        } else if (item.action === 'CREATE_PLAN') {
+          await api.post('/api/study-plans', item.payload);
+        }
+        successCount++;
+      } catch (err: any) {
+        // If 404 on update/delete or duplicate, don't block queue
+        if (err?.status === 404 || err?.response?.status === 404) {
+          successCount++;
+        } else {
+          remaining.push(item);
+          failedCount++;
+        }
+      }
+    }
+
+    writeStorage(key, remaining);
+    if (remaining.length === 0) {
+      localStorage.setItem(getStorageKey('last_synced_at', userId), new Date().toISOString());
+    }
+
+    isProcessingQueue = false;
+    this.notifySyncChange(userId, false);
+    return { success: successCount, failed: failedCount };
+  },
+
+  notifySyncChange(userId?: string, syncing: boolean = isProcessingQueue): void {
+    if (typeof window === 'undefined') return;
+    const queue = this.getSyncQueue(userId);
+    const lastSynced = localStorage.getItem(getStorageKey('last_synced_at', userId));
+    const event = new CustomEvent('studyflow_sync_status', {
+      detail: {
+        isOnline: this.isOnline(),
+        pendingCount: queue.length,
+        isSyncing: syncing,
+        lastSyncedAt: lastSynced,
+      },
+    });
+    window.dispatchEvent(event);
+  },
+
+  // ==========================================
+  // TASKS (LOCAL-FIRST WITH OFFLINE QUEUE)
   // ==========================================
   getTasks(userId?: string): Task[] {
     const key = getStorageKey('tasks', userId);
@@ -144,13 +265,8 @@ export const storage = {
     const updated = [newTask, ...tasks];
     writeStorage(key, updated);
 
-    // Silent background sync to backend if online
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
-      api.post('/api/tasks', newTask).catch(() => {
-        // Safe to ignore: stored on device locally
-      });
-    }
-
+    // Queue for sync when online
+    this.enqueueSync({ action: 'CREATE_TASK', payload: newTask }, userId);
     return newTask;
   },
 
@@ -174,13 +290,8 @@ export const storage = {
 
     if (updatedTask) {
       writeStorage(key, nextTasks);
-
-      // Silent background sync
-      if (typeof navigator !== 'undefined' && navigator.onLine) {
-        api.put(`/api/tasks/${id}`, updates).catch(() => {
-          // Stored on device locally
-        });
-      }
+      // Queue update for sync when online
+      this.enqueueSync({ action: 'UPDATE_TASK', payload: { id, updates } }, userId);
     }
 
     return updatedTask;
@@ -192,11 +303,8 @@ export const storage = {
     const nextTasks = tasks.filter(t => t.id !== id);
     writeStorage(key, nextTasks);
 
-    // Silent background sync
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
-      api.delete(`/api/tasks/${id}`).catch(() => {});
-    }
-
+    // Queue delete for sync when online
+    this.enqueueSync({ action: 'DELETE_TASK', payload: { id } }, userId);
     return true;
   },
 
@@ -223,14 +331,8 @@ export const storage = {
     const combined = [...createdList, ...existing];
     writeStorage(key, combined);
 
-    // Silent background sync
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
-      api.post('/api/tasks/batch', { tasks: createdList }).catch(() => {
-        // Fallback per-item sync
-        createdList.forEach(t => api.post('/api/tasks', t).catch(() => {}));
-      });
-    }
-
+    // Queue batch for cloud sync when online
+    this.enqueueSync({ action: 'BATCH_TASKS', payload: createdList }, userId);
     return createdList;
   },
 
@@ -268,11 +370,7 @@ export const storage = {
     const updated = [newPlan, ...existing];
     writeStorage(key, updated);
 
-    // Silent background sync
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
-      api.post('/api/study-plans', newPlan).catch(() => {});
-    }
-
+    this.enqueueSync({ action: 'CREATE_PLAN', payload: newPlan }, userId);
     return newPlan;
   },
 
@@ -303,11 +401,7 @@ export const storage = {
     const updated = [newSession, ...existing];
     writeStorage(key, updated);
 
-    // Silent background sync
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
-      api.post('/api/study-sessions', newSession).catch(() => {});
-    }
-
+    this.enqueueSync({ action: 'CREATE_SESSION', payload: newSession }, userId);
     return newSession;
   },
 
@@ -338,8 +432,7 @@ export const storage = {
     const updated = [newQuiz, ...existing];
     writeStorage(key, updated);
 
-    // Silent background sync
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
+    if (this.isOnline()) {
       api.post('/api/quizzes', newQuiz).catch(() => {});
     }
 
@@ -361,7 +454,7 @@ export const storage = {
 
     if (updatedQuiz) {
       writeStorage(key, nextQuizzes);
-      if (typeof navigator !== 'undefined' && navigator.onLine) {
+      if (this.isOnline()) {
         api.put(`/api/quizzes/${id}/score`, { score }).catch(() => {});
       }
     }
@@ -380,6 +473,7 @@ export const storage = {
       studyPlans: this.getStudyPlans(userId),
       sessions: this.getStudySessions(userId),
       quizzes: this.getQuizzes(userId),
+      pendingSyncQueue: this.getSyncQueue(userId),
     };
     return JSON.stringify(data, null, 2);
   },
@@ -411,12 +505,26 @@ export const storage = {
     const plans = this.getStudyPlans(userId);
     const sessions = this.getStudySessions(userId);
     const quizzes = this.getQuizzes(userId);
+    const queue = this.getSyncQueue(userId);
 
     return {
       taskCount: tasks.length,
       planCount: plans.length,
       sessionCount: sessions.length,
       quizCount: quizzes.length,
+      pendingSyncCount: queue.length,
+      isOnline: this.isOnline(),
     };
   }
 };
+
+// Global network listener to automatically process queue when online
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    storage.notifySyncChange();
+    storage.processSyncQueue();
+  });
+  window.addEventListener('offline', () => {
+    storage.notifySyncChange();
+  });
+}

@@ -1,17 +1,20 @@
-// StudyFlow AI Service Worker for Android PWA
-const CACHE_NAME = 'studyflow-cache-v1';
+// StudyFlow AI Service Worker — Robust Offline PWA & Asset Cache
+const CACHE_NAME = 'studyflow-offline-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
+  '/manifest.json',
   '/favicon.svg',
   '/apple-touch-icon.png',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
+  '/icons/icon-maskable-192x192.png',
+  '/icons/icon-maskable-512x512.png',
   '/studyflow-ai-logo.jpg'
 ];
 
-// Install: Cache critical static assets
+// Install: Cache critical static shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -20,7 +23,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate: Clean old caches and claim clients immediately
+// Activate: Purge older cache versions and claim all open tabs
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -31,47 +34,53 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: Network-first with cache fallback for HTML/App Shell; Stale-while-revalidate for static assets
+// Fetch: Smart offline interception
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Never cache API requests, Supabase auth, or non-GET requests
+  // Bypass API requests and external auth providers from cache
   if (
     request.method !== 'GET' ||
     url.pathname.startsWith('/api') ||
     url.hostname.includes('supabase.co') ||
     url.hostname.includes('googleapis.com') ||
-    url.hostname.includes('gstatic.com')
+    url.hostname.includes('google.com')
   ) {
     return;
   }
 
-  // Navigation requests: Network first with cache fallback
+  // 1. Navigation requests (HTML pages): Network-first with instant offline fallback
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.status === 200) {
+          if (response && response.status === 200) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           }
           return response;
         })
         .catch(() => {
+          // When offline, serve the cached single page app shell
           return caches.match('/index.html') || caches.match('/');
         })
     );
     return;
   }
 
-  // Static assets (CSS, JS, images, fonts): Stale-while-revalidate
+  // 2. Static application assets (JS chunks, CSS, fonts, images, SVGs)
+  // Strategy: Stale-While-Revalidate with Cache-First performance
   if (
     url.pathname.startsWith('/assets') ||
     url.pathname.startsWith('/icons') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
     url.pathname.endsWith('.svg') ||
     url.pathname.endsWith('.png') ||
-    url.pathname.endsWith('.jpg')
+    url.pathname.endsWith('.jpg') ||
+    url.pathname.endsWith('.webp') ||
+    url.hostname.includes('fonts.gstatic.com')
   ) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
@@ -83,7 +92,7 @@ self.addEventListener('fetch', (event) => {
             }
             return networkResponse;
           })
-          .catch(() => cachedResponse);
+          .catch(() => cachedResponse); // If offline, return existing cache
 
         return cachedResponse || fetchPromise;
       })
@@ -91,7 +100,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Default: Network with cache fallback
+  // 3. Fallback for all other GET resources
   event.respondWith(
     fetch(request).catch(() => caches.match(request))
   );

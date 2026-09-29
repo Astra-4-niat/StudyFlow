@@ -90,6 +90,11 @@ const Dashboard: React.FC = () => {
   };
 
   const fetchRecommendation = async () => {
+    if (!navigator.onLine) {
+      setRecommendation('Offline Mode Active: Your local tasks and schedules are fully accessible. Connect to the internet to refresh AI recommendations.');
+      setRecLoading(false);
+      return;
+    }
     setRecLoading(true);
     try {
       const res = await api.post('/api/ai/recommendation', {});

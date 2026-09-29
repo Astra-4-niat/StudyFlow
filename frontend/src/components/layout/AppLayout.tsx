@@ -5,6 +5,7 @@ import {
   LogOut, Menu, X, ChevronRight, type LucideIcon
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
+import { SyncStatusIndicator } from '../common/SyncStatusIndicator';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -121,6 +122,10 @@ export const AppLayout: React.FC = () => {
           </NavLink>
         </div>
 
+        <div style={{ padding: '0 var(--space-4) var(--space-3)' }}>
+          <SyncStatusIndicator />
+        </div>
+
         <div className="sidebar-footer">
           <div className="user-info">
             <div className="user-avatar">{initials}</div>
@@ -145,7 +150,10 @@ export const AppLayout: React.FC = () => {
           <NavLink to="/dashboard" style={{ textDecoration: 'none' }}>
             <BrandLogo size="sm" />
           </NavLink>
-          <div className="user-avatar user-avatar--sm">{initials}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <SyncStatusIndicator />
+            <div className="user-avatar user-avatar--sm">{initials}</div>
+          </div>
         </header>
 
         <main className="page-content">

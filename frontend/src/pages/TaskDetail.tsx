@@ -50,6 +50,10 @@ const TaskDetail: React.FC = () => {
 
   const handleBreakdown = async () => {
     if (!task) return;
+    if (!navigator.onLine) {
+      toast.error('AI task breakdown requires an active internet connection. All your task details are safely stored on this device.');
+      return;
+    }
     setBreakdownLoading(true);
     try {
       const res = await api.post('/api/ai/task-breakdown', {

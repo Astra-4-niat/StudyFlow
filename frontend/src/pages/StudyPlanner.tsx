@@ -53,6 +53,13 @@ const StudyPlanner: React.FC = () => {
       toast.error('Please fill in goal, subjects, and exam date');
       return;
     }
+    if (!storage.isOnline()) {
+      toast.error('AI Study Planner requires an internet connection. Your offline tasks & plans are fully accessible!', {
+        duration: 4000,
+        icon: '📡',
+      });
+      return;
+    }
     setGenerating(true);
     setCurrentPlan(null);
     setAddedTasks(false);

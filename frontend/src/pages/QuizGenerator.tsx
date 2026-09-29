@@ -24,6 +24,12 @@ const QuizGenerator: React.FC = () => {
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.topic) { toast.error('Please enter a topic'); return; }
+    if (!storage.isOnline()) {
+      toast.error('AI Quiz Generation requires an internet connection.', {
+        icon: '📡',
+      });
+      return;
+    }
     setGenerating(true);
     setQuiz(null);
     setCurrentQ(0);
