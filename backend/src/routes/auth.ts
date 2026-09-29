@@ -279,7 +279,7 @@ router.post('/get-security-question', async (req: Request, res: Response) => {
     const cleanEmail = email.trim().toLowerCase();
 
     if (!hasServiceRoleKey) {
-      res.status(503).json({ error: 'Security question verification is temporarily unavailable.' });
+      res.status(503).json({ error: 'Instant security question reset requires SUPABASE_SERVICE_ROLE_KEY in Vercel environment variables.' });
       return;
     }
 
@@ -335,7 +335,7 @@ router.post('/reset-with-security-question', async (req: Request, res: Response)
     const cleanEmail = email.toLowerCase();
 
     if (!hasServiceRoleKey) {
-      res.status(503).json({ error: 'Password reset via security question is temporarily unavailable.' });
+      res.status(503).json({ error: 'Instant security question reset requires SUPABASE_SERVICE_ROLE_KEY in Vercel environment variables.' });
       return;
     }
 
