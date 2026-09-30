@@ -552,7 +552,7 @@ const Tasks: React.FC = () => {
       </div>
 
       {/* Secondary Filters & Search Bar */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: 'var(--space-3)', marginBottom: 'var(--space-5)' }}>
+      <div className="tasks-filter-bar">
         <div className="search-bar" style={{ marginBottom: 0 }}>
           <Search size={16} className="search-icon" />
           <input

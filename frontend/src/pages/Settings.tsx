@@ -16,14 +16,28 @@ const Settings: React.FC = () => {
   const [savingPassword, setSavingPassword] = useState(false);
 
   // Local storage stats & sync status
-  const [storageStats, setStorageStats] = useState(() => storage.getStorageStats(user?.id));
-  const [syncStatus, setSyncStatus] = useState(() => storage.getSyncStatus(user?.id));
+  const [storageStats, setStorageStats] = useState(() => (
+    storage.getStorageStats ? storage.getStorageStats(user?.id) : { taskCount: 0, planCount: 0, sessionCount: 0, quizCount: 0, pendingSyncCount: 0, isOnline: true }
+  ));
+  const [syncStatus, setSyncStatus] = useState(() => (
+    storage.getSyncStatus ? storage.getSyncStatus(user?.id) : { isOnline: true, pendingCount: 0, pendingQueueCount: 0, isSyncing: false, lastSyncedAt: null }
+  ));
   const [manualSyncing, setManualSyncing] = useState(false);
 
   useEffect(() => {
     const handleSyncStatus = (e: CustomEvent) => {
-      setSyncStatus(e.detail);
-      setStorageStats(storage.getStorageStats(user?.id));
+      if (e.detail) {
+        setSyncStatus({
+          isOnline: e.detail.isOnline ?? navigator.onLine,
+          pendingCount: e.detail.pendingCount ?? 0,
+          pendingQueueCount: e.detail.pendingCount ?? e.detail.pendingQueueCount ?? 0,
+          isSyncing: e.detail.isSyncing ?? false,
+          lastSyncedAt: e.detail.lastSyncedAt ?? null,
+        });
+      }
+      if (storage.getStorageStats) {
+        setStorageStats(storage.getStorageStats(user?.id));
+      }
     };
     window.addEventListener('studyflow_sync_status', handleSyncStatus as EventListener);
     return () => window.removeEventListener('studyflow_sync_status', handleSyncStatus as EventListener);
@@ -394,6 +408,8 @@ const Settings: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 10,
             background: 'var(--bg-elevated)',
             border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-sm)',

@@ -52,6 +52,7 @@ const mobileBottomNavItems = [
   { to: '/planner', icon: BookOpen, label: 'Planner' },
   { to: '/copilot', icon: Bot, label: 'Copilot' },
   { to: '/progress', icon: TrendingUp, label: 'Progress' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export const AppLayout: React.FC = () => {
@@ -152,7 +153,15 @@ export const AppLayout: React.FC = () => {
           </NavLink>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <SyncStatusIndicator />
-            <div className="user-avatar user-avatar--sm">{initials}</div>
+            <NavLink
+              to="/settings"
+              className="mobile-avatar-link"
+              title="Settings & Profile"
+              aria-label="Settings and Profile"
+              style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', cursor: 'pointer' }}
+            >
+              <div className="user-avatar user-avatar--sm">{initials}</div>
+            </NavLink>
           </div>
         </header>
 

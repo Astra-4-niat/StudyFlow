@@ -203,6 +203,18 @@ export const storage = {
     return { success: successCount, failed: failedCount };
   },
 
+  getSyncStatus(userId?: string): SyncStatus & { pendingQueueCount: number } {
+    const queue = this.getSyncQueue(userId);
+    const lastSynced = typeof window !== 'undefined' ? localStorage.getItem(getStorageKey('last_synced_at', userId)) : null;
+    return {
+      isOnline: this.isOnline(),
+      pendingCount: queue.length,
+      pendingQueueCount: queue.length,
+      isSyncing: isProcessingQueue,
+      lastSyncedAt: lastSynced,
+    };
+  },
+
   notifySyncChange(userId?: string, syncing: boolean = isProcessingQueue): void {
     if (typeof window === 'undefined') return;
     const queue = this.getSyncQueue(userId);

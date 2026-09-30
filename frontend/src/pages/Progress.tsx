@@ -159,7 +159,7 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Charts row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-5)', marginBottom: 'var(--space-5)' }}>
+      <div className="progress-grid">
         {/* Weekly study */}
         <div className="card">
           <h2 className="section-title" style={{ marginBottom: 'var(--space-5)' }}>Weekly Study Time</h2>
@@ -210,7 +210,7 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Task completion + Recent sessions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-5)' }}>
+      <div className="progress-grid">
         {/* Task completion */}
         <div className="card">
           <h2 className="section-title" style={{ marginBottom: 'var(--space-5)' }}>Task Completion</h2>
