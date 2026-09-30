@@ -1476,46 +1476,42 @@ The student can then track the work directly inside StudyFlow.
 
 ---
 
-**## 👥 Team
+## 👥 Team Members
 
-#
-
-Team Member
-
-Email
-
-Role
-
-1
-
-Shreyash Bhosale
-
-shreyashbhosale592@gmail.com
-
-Main Candidate / Lead
-
-2
-
-Sparsh Shrivastav
-
-sparshs2020@gmail.com
-
-Team Member
-
-3
-
-Uzair Pathan
-
-pathanuzair968@gmail.com
-
-Team Member
-
-4
-
-Vatsal Pithwa
-
-vatsallovesai@gmail.com
-
+<table>
+  <tr>
+    <td align="center">
+      <b>Shreyash Bhosale</b><br>
+      <sub>Main Candidate / Lead</sub><br>
+      <a href="mailto:shreyashbhosale592@gmail.com">
+        shreyashbhosale592@gmail.com
+      </a>
+    </td>
+    <td align="center">
+      <b>Sparsh Shrivastav</b><br>
+      <sub>Team Member</sub><br>
+      <a href="mailto:sparshs2020@gmail.com">
+        sparshs2020@gmail.com
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <b>Uzair Pathan</b><br>
+      <sub>Team Member</sub><br>
+      <a href="mailto:pathanuzair968@gmail.com">
+        pathanuzair968@gmail.com
+      </a>
+    </td>
+    <td align="center">
+      <b>Vatsal Pithwa</b><br>
+      <sub>Team Member</sub><br>
+      <a href="mailto:vatsallovesai@gmail.com">
+        vatsallovesai@gmail.com
+      </a>
+    </td>
+  </tr>
+</table>
 Team Member
 
 🤝 Contributing**
