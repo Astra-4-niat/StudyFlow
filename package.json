@@ -36,14 +36,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shreyash-bhosale/StudyFlow.git"
+    "url": "git+https://github.com/Astra-4-niat/StudyFlow.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/shreyash-bhosale/StudyFlow/issues"
+    "url": "https://github.com/Astra-4-niat/StudyFlow/issues"
   },
-  "homepage": "https://github.com/shreyash-bhosale/StudyFlow#readme"
+  "homepage": "https://github.com/Astra-4-niat/StudyFlow#readme"
 }
